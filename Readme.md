@@ -11,10 +11,10 @@ Python environemtn ("venv"). Make sure that you also have Redis installed and
 running (`systemctl start redis`). The following third party dependencies are
 used and are installed into the virtual environment:
 
-    - Redis
-    - Django
-    - Django RQ
-    - WNTR
+- Redis
+- Django
+- Django RQ
+- WNTR
 
 Make the environment:
 
