@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="de">
+    {% load static %}
+    <head>
+        <meta charset="utf-8">
+        <title>{{ page_title }}</title>
+
+        <link href="{% static "bs/css/bootstrap.min.css" %}" rel="stylesheet">
+        <link href="{% static "awesome/all.css" %}" rel="stylesheet">
+
+        <style>
+            html, body {
+              height: 80%;
+            }
+            
+            body {
+              display: flex;
+              align-items: center;
+              padding-top: 0px;
+              padding-bottom: 40px;
+            }
+            
+            .form-signin {
+              width: 100%;
+              max-width: 330px;
+              padding: 15px;
+              margin: auto;
+            }
+            .form-signin .checkbox {
+              font-weight: 400;
+            }
+            .form-signin .form-control {
+              position: relative;
+              box-sizing: border-box;
+              height: auto;
+              padding: 10px;
+              font-size: 16px;
+            }
+            .form-signin .form-control:focus {
+              z-index: 2;
+            }
+            .form-signin input[type="text"] {
+              margin-bottom: -1px;
+              border-bottom-right-radius: 0;
+              border-bottom-left-radius: 0;
+            }
+            .form-signin input[type="password"] {
+              margin-bottom: 10px;
+              border-top-left-radius: 0;
+              border-top-right-radius: 0;
+            }
+        </style>
+    </head>
+
+    <body class="text-center">
+
+        <main class="form-signin">
+            <form method="post" action="{% url 'login' %}">
+                {% csrf_token %}
+                <img src="{% static "wmrat_logo.png" %}" height="57" alt="" class="mb-4 rounded">
+
+                <label for="id_username" class="visually-hidden">Username</label>
+                <input type="text" name="username" id="id_username" class="form-control" placeholder="Username" required autofocus>
+                <label for="id_password" class="visually-hidden">Password</label>
+                <input type="password" name="password" id="id_password" class="form-control" placeholder="Passwort" required>
+
+                <input type="hidden" name="next" value="{{ next }}">
+
+                <button class="w-100 btn btn-lg btn-success" type="submit"><i class="fas fa-sign-in-alt"></i> Sign in</button>
+
+                {% if form.errors %}
+                <p style="margin-top: 10px; color: #ff0000; font-weight: bold;">Access denied.</p>
+                {% endif %}
+            </form>
+        </main>
+
+    </body>
+
+</html>
+

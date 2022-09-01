@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<!-- main content -->
+<main class="container">
+    <div class="content">
+
+        <div class="row" style="margin-top: 32px;">
+
+            <!-- args -->
+            <div class="col-sm-12">
+
+                <form class="row g-3" action="{% url 'new' %}" method="post" id="main_form">
+
+                    {% csrf_token %}
+
+                    <div class="col-md-3">
+                        <label for="scenario_name" class="form-label">Scenario name</label>
+                        <input type="text" class="form-control" id="scenario_name" name="scenario_name" value="Test Scenario">
+                    </div>
+
+                    <!-- TODO: for/name correct? -->
+                    <div class="col-md-6">
+                        <label for="network_id" class="form-label">Network</label>
+                        <select name="network_id" class="form-select" aria-label="Default select example">
+                            {% for network in networks %}
+                                <option value="{{ network.id }}">{{network.id}} • {{ network.name }}</option>
+                            {% endfor %}
+
+                        </select>
+                    </div>
+
+                    <!-- XXX labels, etc. (just copied ...) -->
+                    <!--
+                    <div class="col-md-3">
+                        <label for="category_name" class="form-label">Category</label>
+                        <select class="form-select" aria-label="Default select example">
+                            <option selected>Infrastructure failure</option>
+                            <option value="1">Natural disaster</option>
+                            <option value="2">Contamination</option>
+                            <option value="3">Physical attack</option>
+                            <option value="blupp">Pandemic</option>
+                            <option value="bla">Digital incident</option>
+                            <option value="7">Other</option>
+                        </select>
+                    </div>
+                    -->
+
+                    <!-- XXX labels, etc. (just copied ...) -->
+
+                    <!-- TODO: for/name correct? -->
+                    <div class="col-md-3">
+                        <label for="scenario_type" class="form-label">Scenario Type</label>
+                        <select name="scenario_type" class="form-select" aria-label="Default select example">
+                            <!-- TODO -->
+                            <option value="pipe_criticality">Pipe Criticality</option>
+                        </select>
+                    </div>
+
+                    <div class="col-12">
+                        <button id="thebutton" type="submit" class="btn btn-success" onclick="checkInput();" disabled><i class="fas fa-circle-nodes"></i> Run analysis</button>
+                    </div>
+
+                    <hr />
+
+                    <div class="col-md-2">
+                        <label for="analysis_end_time" class="form-label">Analysis end time</label>
+                        <input type="text" class="form-control" id="analysis_end_time" name="analysis_end_time" value="259200">
+                    </div>
+
+                    <div class="col-md-2">
+                        <label for="demand_model" class="form-label">Demand model</label>
+                        <input type="text" class="form-control" id="demand_model" name="demand_model" value="PDD">
+                    </div>
+
+                    <div class="col-md-2">
+                        <label for="required_pressure" class="form-label">Required pressure</label>
+                        <input type="text" class="form-control" id="required_pressure" name="required_pressure" value="17.57">
+                    </div>
+
+                    <div class="col-md-2">
+                        <label for="min_pressure" class="form-label">Min. pressure</label>
+                        <input type="text" class="form-control" id="min_pressure" name="min_pressure" value="0">
+                    </div>
+
+                    <div class="col-md-2">
+                        <label for="min_diameter" class="form-label">Min. diameter</label>
+                        <input type="text" class="form-control" id="min_diameter" name="min_diameter" value="0.61">
+                    </div>
+
+                    <div class="col-md-2">
+                        <label for="pressure_threshold" class="form-label">Pressure threshold</label>
+                        <input type="text" class="form-control" id="pressure_threshold" name="pressure_threshold" value="14.06">
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+        <div class="row" style="margin-top: 10px;">
+            <div id="alert-ui" class="alert alert-primary" role="alert">
+                You have to provide an EPANET input file.
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<script>
+    function setAlert(text) {
+        var t = document.getElementById('alert-ui');
+        t.style.display = '';
+        t.innerHTML = text;
+    }
+
+    function checkInput() {
+        //TODO: failures, etc.
+
+        /* everything (at least client-side) okay at that point ... */
+
+        var t = document.getElementById('alert-ui');
+        t.style.display = 'none';
+
+        var t = document.getElementById('thebutton');
+        t.disabled = false;
+    }
+
+    checkInput();
+
+</script>
+
+{% endblock %}

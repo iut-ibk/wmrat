@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<!-- main content -->
+<main class="container">
+    <div class="content">
+
+        <!-- TODO: other visualizations ... -->
+        <div class="row" style="margin-top: 32px;">
+
+            <h1>{{ scenario.name }}</h1>
+
+            <div class="svg">
+                {{ svg_data|safe}}
+            </div>
+
+        </div>
+
+    </div>
+</main>
+
+<script>
+    console.log("... probably use some visualization lib here ...")
+
+</script>
+
+{% endblock %}
