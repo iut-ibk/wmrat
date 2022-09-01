@@ -15,6 +15,11 @@ used and are installed into the virtual environment:
 - Django RQ
 - WNTR
 
+First check out this repository and switch into it:
+
+    $ git clone git@github.com:iut-ibk/wmrat.git
+    $ cd wmrat
+
 Make the environment:
 
     $ python3.8 -m venv venv # required by WNTR
@@ -33,8 +38,8 @@ application in your virtual environment. There is a script to reset the database
 
     $ ./ops/reset_dev_env.sh
 
-and run migrations) via Django. Then use the following command to run the
-development enviroment:
+The login credentials for the test admin are `admin` and `pass`. Then use the
+following command to run the development enviroment:
 
     $ ./ops/run_dev_env.sh
 
