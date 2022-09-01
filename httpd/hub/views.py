@@ -215,10 +215,6 @@ def do_run_analysis(scenario):
         os.makedirs(scenario_path)
         os.makedirs(result_dir)
 
-    #TODO: get args probably from scenario object
-    #TODO: write them to json
-    #TODO: copy json to scenario data home
-
     # EPANET file
     epanet_file_path = settings.WMRAT_NETWORK_DIR / str(scenario.wm_network.id) / 'network.inp'
     #print(epanet_file_path)
