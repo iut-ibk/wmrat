@@ -31,6 +31,7 @@ def run(wntr_network_obj, param_dict, output_dir):
     
     # Run the criticality analysis, closing one pipe for each simulation
     junctions_impacted = {} 
+    print(pipes)
     for pipe_name in pipes:
     
         # NOTE: could update some progress here ... (but probably not trivial to do it in general?)

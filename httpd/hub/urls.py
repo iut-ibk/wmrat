@@ -14,6 +14,9 @@ urlpatterns = [
     # EPANET archive
     path('epanet_archive', views.epanet_archive, name='epanet_archive'),
 
+    # explore network
+    path('network/<int:network_id>/explore', views.explore, name='explore'),
+
     # scenario archive
     path('archive', views.archive, name='archive'),
 

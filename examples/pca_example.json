@@ -3,6 +3,6 @@
     "demand_model": "PDD",
     "required_pressure": 17.57,
     "min_pressure": 0,
-    "min_diameter": 0.61,
+    "min_diameter": 0.3,
     "pressure_threshold": 14.06
 }

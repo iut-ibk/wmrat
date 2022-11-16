@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<!-- main content -->
+<main class="container">
+    <div class="content">
+
+        <div class="row" style="margin-top: 32px;">
+
+            <!-- args -->
+            <div class="col-sm-12">
+
+                <form class="row g-3" action="{% url 'new' %}" method="post" id="main_form">
+
+                    {% csrf_token %}
+
+                    <div class="col-md-3">
+                        <label for="scenario_name" class="form-label">Network name</label>
+                        <input type="text" class="form-control" id="scenario_name" name="scenario_name" value="Blabla" disabled>
+                    </div>
+
+                    <!-- todo: auto fill from defaults? -->
+                    <div class="col-md-3">
+                        <label for="scenario_name" class="form-label">Begin analysis</label>
+                        <input type="text" class="form-control" id="scenario_name" name="scenario_name" value="2023.01.01" disabled>
+                    </div>
+
+                    <!-- todo: auto fill from defaults? -->
+                    <div class="col-md-3">
+                        <label for="scenario_name" class="form-label">End analysis</label>
+                        <input type="text" class="form-control" id="scenario_name" name="scenario_name" value="2023.01.15" disabled>
+                    </div>
+
+                    <!-- todo: auto fill from defaults? -->
+                    <div class="col-md-3">
+                        <label for="scenario_name" class="form-label">Time-Step</label>
+                        <input type="text" class="form-control" id="scenario_name" name="scenario_name" value="0.25h" disabled>
+                    </div>
+
+                    <div class="col-12">
+                        <button id="thebutton" type="submit" class="btn btn-success" onclick="checkInput();" disabled><i class="fas fa-circle-nodes"></i> Run simulation</button>
+                    </div>
+
+                    <hr />
+
+                <!-- XXX: no form -->
+                </form>
+
+            </div>
+
+            <!-- map -->
+            <div class="col-sm-12">
+                <div id="map_id" style="height: 100%; min-height: 768px; border-radius: 8px;"></div>
+            </div>
+        </div>
+
+        <div class="row" style="margin-top: 10px;">
+            <div id="alert-ui" class="alert alert-primary" role="alert">
+                You have to provide an EPANET input file.
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<script>
+    function setAlert(text) {
+        var t = document.getElementById('alert-ui');
+        t.style.display = '';
+        t.innerHTML = text;
+    }
+
+    function checkInput() {
+        //TODO: failures, etc.
+
+        /* everything (at least client-side) okay at that point ... */
+
+        var t = document.getElementById('alert-ui');
+        t.style.display = 'none';
+
+        var t = document.getElementById('thebutton');
+        t.disabled = false;
+    }
+
+    checkInput();
+
+    var defaultLatLng = new L.LatLng(47.263, 11.404)
+
+    var url = 'https://{s}.wien.gv.at/basemap/bmaporthofoto30cm/normal/google3857/{z}/{y}/{x}.jpeg',
+        attrib = 'Datenquelle: <a href="https://basemap.at">basemap.at</a>',
+        tilelayer = L.tileLayer(url, { maxZoom: 18, attribution: attrib, subdomains: ['maps1', 'maps2', 'maps3', 'maps4']}),
+        map = new L.Map('map_id', { center: defaultLatLng, zoom: 14 });
+
+    drawnItems = L.featureGroup().addTo(map);
+
+    tilelayer.addTo(map);
+
+    let color_ramp_dict = {{ color_ramp|safe }};
+
+    var graph = {{ graph|safe }};
+
+    let pipes = L.geoJson(graph, {
+        style: function(feature) {
+            d = feature.properties.d;
+            return {color: color_ramp_dict[d] || '#000000'}
+        }
+    });
+
+    drawnItems.addLayer(pipes);
+
+    map.fitBounds(drawnItems.getBounds());
+
+    map.setZoom(15);
+
+</script>
+
+{% endblock %}

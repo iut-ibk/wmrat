@@ -20,6 +20,8 @@ import subprocess as sp
 from pathlib import Path
 import shutil
 import time
+from pyproj import Transformer
+import numpy as np #XXX: import sauhaufen, tests, schoenes html, schoenes dev setup (podman), schoene CI, schoener test, notify, aber dann ...
 import signal
 
 from hub.models import Scenario, WMNetwork
@@ -157,6 +159,41 @@ def import_network(request):
     }
 
     return render(request, 'import.html', context)
+
+@login_required
+def explore(request, network_id):
+    network = get_object_or_404(WMNetwork, id=network_id)
+
+    network_path = settings.WMRAT_SCENARIO_DIR
+    network_path = settings.WMRAT_NETWORK_DIR / str(network.id)
+
+    context = {
+    }
+
+    then = dt.datetime.now()
+
+    epanet_network_path = os.path.join(settings.WMRAT_NETWORK_DIR, str(network.id), 'network.inp')
+
+    with open(epanet_network_path) as f:
+        lines = []
+        for line in f:
+            lines.append(line)
+
+    json_graph, diameters = epanet2geojson(lines)
+    elapsed_time_s = (dt.datetime.now() - then).total_seconds()
+
+    print(f'parsing and making geojson took: {elapsed_time_s}')
+
+    color_ramp = make_red_green_color_ramp_dict(diameters)
+
+    context = {
+        'page_title': 'WMRat: Explore Network',
+        'graph': json_graph,
+        'color_ramp': color_ramp,
+        'network': network,
+    }
+
+    return render(request, 'explore_network.html', context)
 
 @login_required
 def new(request):
@@ -343,4 +380,107 @@ def do_cancel(scenario):
     except Exception as e:
         #NOTE: what to do here?
         pass
+
+def epanet2geojson(inp_lines):
+    pipes = {}
+    coords = {}
+
+    diameters = set()
+
+    # parse it ...
+    in_pipe_section = False
+    in_coordinates_section = False
+    for line in inp_lines:
+        line = line.split(';')[0].strip()
+        if not line:
+            continue
+
+        if line.startswith('[PIPES]'):
+            in_pipe_section = True
+            continue
+
+        if line.startswith('[COORDINATES]'):
+            in_coordinates_section = True
+            continue
+
+        if in_pipe_section:
+            parts = line.split()
+            if len(parts) == 8:
+                pipe_params = parts
+                key = parts[0]
+                node1, node2 = parts[1:3]
+
+                diameter = int(parts[4])
+                diameters.add(diameter)
+
+                pipes[key] = {
+                    'node0': node1,
+                    'node1': node2,
+                    'diameter': diameter,
+                }
+            else:
+                in_pipe_section = False
+
+        if in_coordinates_section:
+            parts = line.split()
+            if len(parts) == 3:
+                key, c0, c1 = parts[:3]
+                coords[key] = {
+                    'c0': c0,
+                    'c1': c1,
+                }
+            else:
+                in_coordinates_section = False
+
+    # ... make GeoJSON
+    geojson = {
+        'type': 'FeatureCollection',
+        'name': 'pipe_diameters',
+        'crs': {'type': 'name', 'properties': {'name': 'urn:ogc:def:crs:EPSG::3857'}},
+        'features': [],
+    }
+
+    trans_3857_to_4326 = Transformer.from_crs('EPSG:3857', 'EPSG:4326')
+
+    features = []
+    for value_dict in pipes.values():
+        n0_c0, n0_c1 = list(map(float, coords[value_dict['node0']].values()))
+        n1_c0, n1_c1 = list(map(float, coords[value_dict['node1']].values()))
+
+        #XXX: why are they reversed (e.g. also in dynavibe; bug in dynavibe?)
+        n0_c1, n0_c0 = trans_3857_to_4326.transform(n0_c0, n0_c1)
+        n1_c1, n1_c0 = trans_3857_to_4326.transform(n1_c0, n1_c1)
+
+        diameter = value_dict['diameter']
+        feature = {
+            'type': 'Feature',
+            'properties': {
+                'd': float(diameter),
+            },
+            'geometry': {
+                'type': 'LineString',
+                'coordinates': [[n0_c0, n0_c1], [n1_c0, n1_c1]],
+            }
+        }
+
+        features.append(feature)
+    geojson['features'] = features
+    return geojson, list(sorted(diameters))
+
+def make_red_green_color_ramp_dict(diameters):
+    n = len(diameters)
+
+    green_vals = np.linspace(0, 255, n, dtype=np.uint8)
+
+    colors = []
+    for i, green in enumerate(green_vals):
+        color = green_vals[n - i - 1], green, 0
+        hex_color = '#%02x%02x%02x' % color
+
+        colors.append(hex_color)
+
+    #NOTE: most common (smalltest) diameters gets black color
+    colors[-1] = '#000000'
+
+    return dict(zip(diameters, reversed(colors)))
 
