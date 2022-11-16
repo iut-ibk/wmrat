@@ -182,6 +182,8 @@ def explore(request, network_id):
     json_graph, diameters = epanet2geojson(lines)
     elapsed_time_s = (dt.datetime.now() - then).total_seconds()
 
+    print('diameters:', diameters)
+
     print(f'parsing and making geojson took: {elapsed_time_s}')
 
     color_ramp = make_red_green_color_ramp_dict(diameters)
@@ -441,6 +443,8 @@ def epanet2geojson(inp_lines):
     }
 
     trans_3857_to_4326 = Transformer.from_crs('EPSG:3857', 'EPSG:4326')
+
+    print('#pipes = ', len(pipes))
 
     features = []
     for value_dict in pipes.values():
