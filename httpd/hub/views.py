@@ -21,7 +21,7 @@ from pathlib import Path
 import shutil
 import time
 from pyproj import Transformer
-import numpy as np #XXX: import sauhaufen, tests, schoenes html, schoenes dev setup (podman), schoene CI, schoener test, notify, aber dann ...
+import numpy as np
 import signal
 
 from hub.models import Scenario, WMNetwork
@@ -36,7 +36,7 @@ def archive(request):
     page_nr = request.GET.get('p')
     page_obj = paginator.get_page(page_nr)
 
-    # maybe not needed ... (useful for search) ...
+    #NOTE: maybe not needed ... (useful for search) ...
     query_list = []
     for key in request.GET.keys():
         if key == 'p':
@@ -412,7 +412,7 @@ def epanet2geojson(inp_lines):
                 key = parts[0]
                 node1, node2 = parts[1:3]
 
-                diameter = int(parts[4])
+                diameter = float(parts[4])
                 diameters.add(diameter)
 
                 pipes[key] = {
