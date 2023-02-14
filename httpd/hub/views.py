@@ -20,11 +20,13 @@ import subprocess as sp
 from pathlib import Path
 import shutil
 import time
-from pyproj import Transformer
+import sys
 import numpy as np
 import signal
 
 from hub.models import Scenario, WMNetwork
+
+import epanet_util as enu
 
 @login_required
 def archive(request):
@@ -145,7 +147,7 @@ def import_network(request):
                     f.write(chunk)
 
             #TODO: for debugging ...
-            print('EPANET input file written')
+            print('EPANET input file written', file=sys.stderr)
             return HttpResponseRedirect(reverse('epanet_archive', args=()))
 
         #TODO: ... and here?
@@ -174,24 +176,34 @@ def explore(request, network_id):
 
     epanet_network_path = os.path.join(settings.WMRAT_NETWORK_DIR, str(network.id), 'network.inp')
 
-    with open(epanet_network_path) as f:
-        lines = []
-        for line in f:
-            lines.append(line)
+    success, val = enu.epanet_inp_read(epanet_network_path)
+    if not success:
+        return HttpResponseServerError(f'{epanet_network_path}: unable to parse EPANET input file')
 
-    json_graph, diameters = epanet2geojson(lines)
+    epanet_dict = val
+
+    #XXX: do not hard-code this ... when importing demand it from the user?
+    epanet_epsg_code = 31254
+
+    #XXX: maybe do that after importing and save in network dir?
+    success, val = enu.epanet_to_graph(epanet_dict)
+    if not success:
+        return HttpResponseServerError(f'{epanet_network_path}: unable to build graph from EPANET input')
+
+    nodes, edges = val
+    success, val = enu.graph_to_geojsons(nodes, edges, epanet_epsg_code)
+    if not success:
+        return HttpResponseServerError(f'{epanet_network_path}: unable to get GeoJSON strings from EPANET input')
+
+    geojson_nodes, geojson_edges = val
+
     elapsed_time_s = (dt.datetime.now() - then).total_seconds()
 
-    print('diameters:', diameters)
-
-    print(f'parsing and making geojson took: {elapsed_time_s}')
-
-    color_ramp = make_red_green_color_ramp_dict(diameters)
+    print(f'parsing and making GeoJSONs took: {elapsed_time_s}', file=sys.stderr)
 
     context = {
         'page_title': 'WMRat: Explore Network',
-        'graph': json_graph,
-        'color_ramp': color_ramp,
+        'graph': geojson_edges,
         'network': network,
     }
 
@@ -203,10 +215,7 @@ def new(request):
         arg_dict = request.POST.dict()
         arg_dict.pop('csrfmiddlewaretoken')
 
-        #print(arg_dict)
         network_id = int(arg_dict['network_id'])
-
-        print(network_id)
 
         #NOTE: we do not check input (rely on JS validation, but should do that here too)
         scenario = Scenario(
@@ -256,14 +265,13 @@ def do_run_analysis(scenario):
 
     # EPANET file
     epanet_file_path = settings.WMRAT_NETWORK_DIR / str(scenario.wm_network.id) / 'network.inp'
-    #print(epanet_file_path)
 
     # param JSON
     input_json_path = scenario_path / 'param.json'
     with open(input_json_path, 'w') as f:
         f.write(json.dumps(scenario.input_json))
 
-    script = settings.PROC_PATH
+    script = settings.TOOLKIT_PATH / 'main.py'
     args = ['python3', script, epanet_file_path, input_json_path, result_dir] #XXX: add json file
 
     p = sp.Popen(args, stdout=sp.PIPE, stderr=sp.PIPE)
@@ -351,7 +359,6 @@ def do_delete(scenario_id):
 def cancel(request, scenario_id):
     scenario = get_object_or_404(Scenario, id=scenario_id)
 
-    print(scenario.proc_pid)
     if scenario.user.id != request.user.id:
         return HttpResponseForbidden('Forbidden')
 
@@ -382,109 +389,4 @@ def do_cancel(scenario):
     except Exception as e:
         #NOTE: what to do here?
         pass
-
-def epanet2geojson(inp_lines):
-    pipes = {}
-    coords = {}
-
-    diameters = set()
-
-    # parse it ...
-    in_pipe_section = False
-    in_coordinates_section = False
-    for line in inp_lines:
-        line = line.split(';')[0].strip()
-        if not line:
-            continue
-
-        if line.startswith('[PIPES]'):
-            in_pipe_section = True
-            continue
-
-        if line.startswith('[COORDINATES]'):
-            in_coordinates_section = True
-            continue
-
-        if in_pipe_section:
-            parts = line.split()
-            if len(parts) == 8:
-                pipe_params = parts
-                key = parts[0]
-                node1, node2 = parts[1:3]
-
-                diameter = float(parts[4])
-                diameters.add(diameter)
-
-                pipes[key] = {
-                    'node0': node1,
-                    'node1': node2,
-                    'diameter': diameter,
-                }
-            else:
-                in_pipe_section = False
-
-        if in_coordinates_section:
-            parts = line.split()
-            if len(parts) == 3:
-                key, c0, c1 = parts[:3]
-                coords[key] = {
-                    'c0': c0,
-                    'c1': c1,
-                }
-            else:
-                in_coordinates_section = False
-
-    # ... make GeoJSON
-    geojson = {
-        'type': 'FeatureCollection',
-        'name': 'pipe_diameters',
-        'crs': {'type': 'name', 'properties': {'name': 'urn:ogc:def:crs:EPSG::3857'}},
-        'features': [],
-    }
-
-    trans_3857_to_4326 = Transformer.from_crs('EPSG:3857', 'EPSG:4326')
-
-    print('#pipes = ', len(pipes))
-
-    features = []
-    for value_dict in pipes.values():
-        n0_c0, n0_c1 = list(map(float, coords[value_dict['node0']].values()))
-        n1_c0, n1_c1 = list(map(float, coords[value_dict['node1']].values()))
-
-        #XXX: why are they reversed (e.g. also in dynavibe; bug in dynavibe?)
-        n0_c1, n0_c0 = trans_3857_to_4326.transform(n0_c0, n0_c1)
-        n1_c1, n1_c0 = trans_3857_to_4326.transform(n1_c0, n1_c1)
-
-        diameter = value_dict['diameter']
-        feature = {
-            'type': 'Feature',
-            'properties': {
-                'd': float(diameter),
-            },
-            'geometry': {
-                'type': 'LineString',
-                'coordinates': [[n0_c0, n0_c1], [n1_c0, n1_c1]],
-            }
-        }
-
-        features.append(feature)
-    geojson['features'] = features
-    return geojson, list(sorted(diameters))
-
-def make_red_green_color_ramp_dict(diameters):
-    n = len(diameters)
-
-    green_vals = np.linspace(0, 255, n, dtype=np.uint8)
-
-    colors = []
-    for i, green in enumerate(green_vals):
-        color = green_vals[n - i - 1], green, 0
-        hex_color = '#%02x%02x%02x' % color
-
-        colors.append(hex_color)
-
-    #NOTE: most common (smalltest) diameters gets black color
-    colors[-1] = '#000000'
-
-    return dict(zip(diameters, reversed(colors)))
 

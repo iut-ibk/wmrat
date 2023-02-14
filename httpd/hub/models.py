@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 
 class WMRatUser(AbstractUser):
-        pass
+    pass
 
 class WMNetwork(models.Model):
     # name

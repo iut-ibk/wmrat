@@ -114,22 +114,24 @@
 
     var url = 'https://{s}.wien.gv.at/basemap/bmaporthofoto30cm/normal/google3857/{z}/{y}/{x}.jpeg',
         attrib = 'Datenquelle: <a href="https://basemap.at">basemap.at</a>',
-        tilelayer = L.tileLayer(url, { maxZoom: 18, attribution: attrib, subdomains: ['maps1', 'maps2', 'maps3', 'maps4']}),
+        tilelayer = L.tileLayer(url, { maxZoom: 20, attribution: attrib, subdomains: ['maps1', 'maps2', 'maps3', 'maps4']}),
         map = new L.Map('map_id', { center: defaultLatLng, zoom: 14 });
 
     drawnItems = L.featureGroup().addTo(map);
 
     tilelayer.addTo(map);
 
-    let color_ramp_dict = {{ color_ramp|safe }};
+    //let color_ramp_dict = {{ color_ramp|safe }};
 
     var graph = {{ graph|safe }};
 
     let pipes = L.geoJson(graph, {
+        /*
         style: function(feature) {
             d = feature.properties.d;
             return {color: color_ramp_dict[d] || '#000000'}
         }
+        */
     });
 
     drawnItems.addLayer(pipes);

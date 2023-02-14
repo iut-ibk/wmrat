@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 
 from pathlib import Path
 import os
+import sys
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent #NOTE: additional level because of "base"-architecture
@@ -20,7 +21,9 @@ AUTH_USER_MODEL = 'hub.WMRatUser'
 
 MAX_PROCESSING_TIME = 2 * 24 * 3600 # 2 days
 
-PROC_PATH = BASE_DIR.parent / 'toolkit' / 'main.py'
+TOOLKIT_PATH = BASE_DIR.parent / 'toolkit'
+
+sys.path += [str(TOOLKIT_PATH)]
 
 ROWS_PER_PAGE = 25
 
