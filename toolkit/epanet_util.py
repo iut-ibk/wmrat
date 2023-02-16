@@ -1,7 +1,127 @@
 import itertools as it
 import string
 import collections as c
+import subprocess as sp
 from pyproj import Transformer
+
+def run_epanet_and_collect_results(epanet_bin_path, epanet_inp_path, epanet_rep_path):
+    p = sp.Popen([epanet_bin_path, epanet_inp_path, epanet_rep_path], stdout=sp.PIPE, stderr=sp.PIPE)
+    out, err = p.communicate()
+
+    if p.returncode != 0:
+        return False, f'fatal: running EPANET failed: stdout:\n{out}\nstderr:\n{err}'
+
+    success, val = epanet_rep_read(epanet_rep_path)
+    if not success:
+        return False, f'fatal: parsing EPANET report failed: {val}'
+
+    epanet_rep_dict = val
+    return True, epanet_rep_dict
+
+def epanet_rep_read(path):
+    lines = []
+
+    #NOTE: support nodes with demand, head and pressure and links with flow, velocity and headloss
+    report_dict = {
+        'nodes': {},
+        'links': {},
+        'summary': {}
+    }
+
+    node_result_offsets = []
+    link_result_offsets = []
+
+    try:
+        # first pass: parse summary and result offsets
+        with open(path) as f:
+            for line_nr, line in enumerate(f):
+                # record node and link result offsets
+                if 'Node Results at' in line:
+                    node_result_offsets += [line_nr]
+                if 'Link Results at' in line:
+                    link_result_offsets += [line_nr]
+
+                # from summary (nodes):
+                if 'Number of Junctions' in line:
+                    n_junctions = int(line.split()[-1])
+                if 'Number of Reservoirs' in line:
+                    n_reservoirs = int(line.split()[-1])
+                if 'Number of Tanks' in line:
+                    n_tanks = int(line.split()[-1])
+
+                # from summary (links):
+                if 'Number of Pipes' in line:
+                    n_pipes = int(line.split()[-1])
+                if 'Number of Pumps' in line:
+                    n_pumps = int(line.split()[-1])
+                if 'Number of Valves' in line:
+                    n_valves = int(line.split()[-1])
+
+                lines.append(line)
+
+        report_dict['summary']['n_junctions'] = n_junctions
+        report_dict['summary']['n_reservoirs'] = n_reservoirs
+        report_dict['summary']['n_tanks'] = n_tanks
+
+        report_dict['summary']['n_pipes'] = n_pipes
+        report_dict['summary']['n_pumps'] = n_pumps
+        report_dict['summary']['n_valves'] = n_valves
+
+        n_nodes = n_junctions + n_reservoirs + n_tanks
+        n_links = n_pipes + n_pumps + n_valves
+
+        # second pass: parse actual results (nodes):
+        for node_result_offset in node_result_offsets:
+            start_line = node_result_offset + 5
+
+            for line_nr in range(start_line, start_line + n_nodes):
+                parts = lines[line_nr].split()
+
+                name = parts[0]
+                demand = float(parts[1])
+                head = float(parts[2])
+                pressure = float(parts[3])
+
+                # initialize node dictionary on first timestep
+                if name not in report_dict['nodes']:
+                    report_dict['nodes'][name] = {
+                        'demand': [],
+                        'head': [],
+                        'pressure': [],
+                    }
+
+                report_dict['nodes'][name]['demand'] += [demand]
+                report_dict['nodes'][name]['head'] += [head]
+                report_dict['nodes'][name]['pressure'] += [pressure]
+
+        # second pass: parse actual results (links):
+        for link_result_offset in link_result_offsets:
+            start_line = link_result_offset + 5
+
+            for line_nr in range(start_line, start_line + n_links):
+                parts = lines[line_nr].split()
+
+                name = parts[0]
+                flow = float(parts[1])
+                velocity = float(parts[2])
+                headloss = float(parts[3])
+
+                # initialize link dictionary on first timestep
+                if name not in report_dict['links']:
+                    report_dict['links'][name] = {
+                        'flow': [],
+                        'velocity': [],
+                        'headloss': [],
+                    }
+
+                report_dict['links'][name]['flow'] += [flow]
+                report_dict['links'][name]['velocity'] += [velocity]
+                report_dict['links'][name]['headloss'] += [headloss]
+
+    except Exception as e:
+        return False, str(e)
+
+    return True, report_dict
 
 def epanet_inp_read(path):
     # read lines
@@ -51,12 +171,13 @@ def epanet_inp_preprocess(lines):
     lines = filter(lambda l : any(map(lambda c : c in string.printable, l)), lines)      # ... and blank lines
     return lines
 
-def epanet_inp_write(f, inp): 
-    for name, lines in inp.items():
-        f.write('[' + name + ']\n')
-        for l in lines:
-            f.write(' '.join(l) + '\n')
-        f.write('\n')
+def epanet_inp_write(inp, path): 
+    with open(path, 'w') as f:
+        for name, lines in inp.items():
+            f.write('[' + name + ']\n')
+            for l in lines:
+                f.write(' '.join(l) + '\n')
+            f.write('\n')
 
 # rewrite an EPANET dictionary to a graph (edges, nodes) with corresponding parameters
 # depending on the component:
@@ -273,6 +394,7 @@ def graph_to_geojsons(epanet_nodes, epanet_edges, epanet_epsg_int):
                 'coordinates': trans_coords[0],
             },
             'properties': {
+                'id': node,
                 'type': node_params['type'],
                 'param': node_params['param'],
             }
@@ -309,6 +431,7 @@ def graph_to_geojsons(epanet_nodes, epanet_edges, epanet_epsg_int):
                 'coordinates': trans_coords,
             },
             'properties': {
+                'id': edge,
                 'type': edge_params['type'],
                 'param': edge_params['param'],
             }

@@ -1,11 +1,16 @@
 # import common settings
 from .base import *
+from pathlib import Path
 
 SECRET_KEY = 'very secret ...'
 
 DEBUG = True
 
 ALLOWED_HOSTS = []
+
+home = str(Path.home())
+
+EPANET_BIN_PATH = home + '/git/EPANET2.2/SRC_engines/epanet2'
 
 RQ_QUEUES = {
     'crunch': {

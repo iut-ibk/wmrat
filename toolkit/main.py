@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import sys
+import os
 import json
 import time
 import wntr
@@ -14,6 +15,12 @@ epanet_inp_path = sys.argv[1]
 json_path = sys.argv[2]
 output_dir = sys.argv[3]
 
+if 'EPANET_BIN_PATH' not in os.environ:
+    print(f'fatal: EPANET_BIN_PATH not set', file=sys.stderr)
+    sys.exit(1)
+
+epanet_bin_path = os.environ['EPANET_BIN_PATH']
+
 # parse param json
 try:
     with open(json_path) as f:
@@ -23,21 +30,14 @@ except Exception as e:
     print(f'fatal: error in parameter json: {e}', file=sys.stderr)
     sys.exit(1)
 
-# parse EPANET input file (via WNTR)
-try:
-    wn = wntr.network.WaterNetworkModel(epanet_inp_path)
-except Exception as e:
-    print(f'fatal: error in EPANET input file: {e}', file=sys.stderr)
-    sys.exit(1)
-
 #TODO: probably branch here ...
 
 # run scenario
-err = pipe_criticality_analysis.run(wn, param_dict, output_dir)
+success = pipe_criticality_analysis.run(epanet_bin_path, epanet_inp_path, param_dict, output_dir)
 
 # something went wrong
-if err:
-    print(f'fatal: {err}', file=sys.stderr)
+if not success:
+    print(f'fatal: analysis failed', file=sys.stderr)
     sys.exit(1)
 
 # ... otherwise exit (0)

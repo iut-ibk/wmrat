@@ -93,30 +93,78 @@ def epanet_archive(request):
 def visualize_result(request, scenario_id):
     scenario = get_object_or_404(Scenario, id=scenario_id)
 
-    scenario_path = settings.WMRAT_SCENARIO_DIR / str(scenario.id)
+    network = scenario.wm_network
+
+    network_path = settings.WMRAT_NETWORK_DIR / str(network.id)
+
+    with open(network_path / 'gis' / 'links.geojson') as f:
+        geojson_links = json.load(f)
 
     #TODO: hacky ... (we do that 2x)
-
+    scenario_path = settings.WMRAT_SCENARIO_DIR / str(scenario.id)
     new_results_name = f'{scenario.id}_{scenario.name}'.replace(' ', '_')
-    svg_path = scenario_path / new_results_name / 'pipe_criticality_viz.svg'
 
-    #XXX: extremely hacky:
-    str_buf = []
-    with open(svg_path) as f:
-        for n, line in enumerate(f):
-            if n < 3:
-                continue
-            
-            str_buf.append(line)
-    
-    str_buf = ''.join(str_buf)
+    #XXX: depending on scenario
+    json_path = scenario_path / new_results_name / 'nodes_affected_by_pipe_failure.json'
+
+    with open(json_path) as f:
+        nodes_affected = json.load(f)
+
+    max_affected = max(nodes_affected.values())
+    print(max_affected)
+
+    for link in geojson_links['features']:
+        link_name = link['properties']['id']
+        if link_name in nodes_affected:
+            count = nodes_affected[link_name]
+        else:
+            count = 0 #XXX: not really correct, but fow now ...
+
+        link['properties']['nodes_affected'] = count
+
+    n_ranges = 25
+    ranges = []
+
+    range_width = max_affected / n_ranges
+
+    for i in range(n_ranges):
+        ranges.append((i + 1) * range_width)
+
+    color_ramp = make_red_green_color_ramp_dict(ranges)
+    print(color_ramp)
 
     context = {
         'page_title': 'Result', #TODO: better name
-        'scenario': scenario,
-        'svg_data': str_buf,
+        'graph': geojson_links,
+        'color_ramp': color_ramp,
+        'network': network, #XXX?
     }
+
     return render(request, 'visualize_result.html', context)
+
+def make_red_green_color_ramp_dict(parts):
+    n = len(parts)
+
+    green_vals = np.linspace(0, 255, n, dtype=np.uint8)
+
+    colors = []
+    for i, green in enumerate(green_vals):
+        color = green_vals[n - i - 1], green, 0
+        hex_color = '#%02x%02x%02x' % color
+
+        colors.append(hex_color)
+
+    #NOTE: XXX: old; most common (smalltest) diameters gets black color
+    #colors[-1] = '#000000'
+
+    colors_reversed = list(reversed(colors))
+
+    x = []
+    for i in range(n):
+        x.append([parts[i], colors_reversed[i]])
+
+    #return list(zip(parts, reversed(colors)))
+    return x
 
 @login_required
 def import_network(request):
@@ -146,6 +194,37 @@ def import_network(request):
                 for chunk in epanet_file.chunks():
                     f.write(chunk)
 
+            success, val = enu.epanet_inp_read(epanet_model_path)
+            if not success:
+                return HttpResponseBadRequest(f'unable to parse EPANET input file')
+
+            epanet_dict = val
+
+            #TODO: run it here => 1) have input sanity check 2) could provide results in explore
+
+            #XXX: do not hard-code this ... when importing demand it from the user?
+            epanet_epsg_code = 31254
+
+            success, val = enu.epanet_to_graph(epanet_dict)
+            if not success:
+                return HttpResponseServerError(f'unable to build graph from EPANET input')
+
+            nodes, links = val
+            success, val = enu.graph_to_geojsons(nodes, links, epanet_epsg_code)
+            if not success:
+                return HttpResponseServerError(f'unable to get GeoJSON strings from EPANET input')
+
+            nodes_geojson, links_geojson = val
+
+            gis_dir = epanet_model_dir / 'gis'
+            os.makedirs(gis_dir)
+
+            with open(gis_dir / 'nodes.geojson', 'w') as f:
+                json.dump(nodes_geojson, f)
+
+            with open(gis_dir / 'links.geojson', 'w') as f:
+                json.dump(links_geojson, f)
+
             #TODO: for debugging ...
             print('EPANET input file written', file=sys.stderr)
             return HttpResponseRedirect(reverse('epanet_archive', args=()))
@@ -166,44 +245,14 @@ def import_network(request):
 def explore(request, network_id):
     network = get_object_or_404(WMNetwork, id=network_id)
 
-    network_path = settings.WMRAT_SCENARIO_DIR
     network_path = settings.WMRAT_NETWORK_DIR / str(network.id)
 
-    context = {
-    }
-
-    then = dt.datetime.now()
-
-    epanet_network_path = os.path.join(settings.WMRAT_NETWORK_DIR, str(network.id), 'network.inp')
-
-    success, val = enu.epanet_inp_read(epanet_network_path)
-    if not success:
-        return HttpResponseServerError(f'{epanet_network_path}: unable to parse EPANET input file')
-
-    epanet_dict = val
-
-    #XXX: do not hard-code this ... when importing demand it from the user?
-    epanet_epsg_code = 31254
-
-    #XXX: maybe do that after importing and save in network dir?
-    success, val = enu.epanet_to_graph(epanet_dict)
-    if not success:
-        return HttpResponseServerError(f'{epanet_network_path}: unable to build graph from EPANET input')
-
-    nodes, edges = val
-    success, val = enu.graph_to_geojsons(nodes, edges, epanet_epsg_code)
-    if not success:
-        return HttpResponseServerError(f'{epanet_network_path}: unable to get GeoJSON strings from EPANET input')
-
-    geojson_nodes, geojson_edges = val
-
-    elapsed_time_s = (dt.datetime.now() - then).total_seconds()
-
-    print(f'parsing and making GeoJSONs took: {elapsed_time_s}', file=sys.stderr)
+    with open(network_path / 'gis' / 'links.geojson') as f:
+        geojson_links = json.load(f)
 
     context = {
         'page_title': 'WMRat: Explore Network',
-        'graph': geojson_edges,
+        'graph': geojson_links,
         'network': network,
     }
 
@@ -274,7 +323,14 @@ def do_run_analysis(scenario):
     script = settings.TOOLKIT_PATH / 'main.py'
     args = ['python3', script, epanet_file_path, input_json_path, result_dir] #XXX: add json file
 
-    p = sp.Popen(args, stdout=sp.PIPE, stderr=sp.PIPE)
+    #NOTE: currently we do it like that ...
+    tmp_env = os.environ.copy()
+    tmp_env['EPANET_BIN_PATH'] = settings.EPANET_BIN_PATH
+
+    #NOTE: ... but could also do it somehow like this:
+    #success = pipe_criticality_analysis.run(epanet_bin_path, epanet_inp_path, param_dict, output_dir)
+
+    p = sp.Popen(args, stdout=sp.PIPE, stderr=sp.PIPE, env=tmp_env)
     scenario.proc_pid = p.pid
     scenario.save()
 

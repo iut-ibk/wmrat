@@ -48,9 +48,9 @@
 
         <div class="row" style="margin-top: 32px;">
             <!-- map -->
-            <div class="col-sm-6">
+            <div class="col-sm-12">
                 <!-- XXX: hacky hardocded -->
-                <div id="map_id" style="height: 950px; border-radius: 8px;"></div>
+                <div id="map_id" style="height: 950px; width=100%; border-radius: 8px;"></div>
 
             </div>
 
@@ -74,11 +74,13 @@
             <!-- map -->
         </div>
 
+        <!--
         <div class="row" style="margin-top: 10px;">
             <div id="alert-ui" class="alert alert-primary" role="alert">
                 You have to provide an EPANET input file.
             </div>
         </div>
+        -->
 
         <hr />
 
@@ -90,31 +92,11 @@
 </main>
 
 <script>
-    function setAlert(text) {
-        var t = document.getElementById('alert-ui');
-        t.style.display = '';
-        t.innerHTML = text;
-    }
-
-    function checkInput() {
-        //TODO: failures, etc.
-
-        /* everything (at least client-side) okay at that point ... */
-
-        var t = document.getElementById('alert-ui');
-        t.style.display = 'none';
-
-        var t = document.getElementById('thebutton');
-        t.disabled = false;
-    }
-
-    checkInput();
-
     var defaultLatLng = new L.LatLng(47.263, 11.404)
 
     var url = 'https://{s}.wien.gv.at/basemap/bmaporthofoto30cm/normal/google3857/{z}/{y}/{x}.jpeg',
         attrib = 'Datenquelle: <a href="https://basemap.at">basemap.at</a>',
-        tilelayer = L.tileLayer(url, { maxZoom: 20, attribution: attrib, subdomains: ['maps1', 'maps2', 'maps3', 'maps4']}),
+        tilelayer = L.tileLayer(url, { maxZoom: 22, attribution: attrib, subdomains: ['maps1', 'maps2', 'maps3', 'maps4']}),
         map = new L.Map('map_id', { center: defaultLatLng, zoom: 14 });
 
     drawnItems = L.featureGroup().addTo(map);
@@ -125,7 +107,7 @@
 
     var graph = {{ graph|safe }};
 
-    let pipes = L.geoJson(graph, {
+    let links = L.geoJson(graph, {
         /*
         style: function(feature) {
             d = feature.properties.d;
@@ -134,73 +116,9 @@
         */
     });
 
-    drawnItems.addLayer(pipes);
+    drawnItems.addLayer(links);
 
     map.fitBounds(drawnItems.getBounds());
-
-    map.setZoom(15);
-
-    g = new Dygraph(
-        document.getElementById("graph1"),
-        // For possible data formats, see http://dygraphs.com/data.html
-        // The x-values could also be dates, e.g. "2012/03/15"
-        `X,Y,Z
-        1,0,3
-        2,2,6
-        3,4,8
-        4,6,9
-        5,8,9
-        6,10,8
-        7,12,6
-        8,14,3`,
-        {
-          // options go here. See http://dygraphs.com/options.html
-          legend: 'always',
-          animatedZooms: true,
-          title: 'dygraphs chart template'
-        });
-
-        g = new Dygraph(
-            document.getElementById("graph2"),
-            // For possible data formats, see http://dygraphs.com/data.html
-            // The x-values could also be dates, e.g. "2012/03/15"
-            `X,Y,Z
-            1,0,3
-            2,2,6
-            3,4,8
-            4,6,9
-            5,8,9
-            6,10,8
-            7,12,6
-            8,14,3`,
-            {
-              // options go here. See http://dygraphs.com/options.html
-              legend: 'always',
-              animatedZooms: true,
-              title: 'dygraphs chart template'
-            });
-    
-        g = new Dygraph(
-            document.getElementById("graph3"),
-            // For possible data formats, see http://dygraphs.com/data.html
-            // The x-values could also be dates, e.g. "2012/03/15"
-            `X,Y,Z
-            1,0,3
-            2,2,6
-            3,4,8
-            4,6,9
-            5,8,9
-            6,10,8
-            7,12,6
-            8,14,3`,
-            {
-              // options go here. See http://dygraphs.com/options.html
-              legend: 'always',
-              animatedZooms: true,
-              title: 'dygraphs chart template'
-            });
-
-
 
 </script>
 

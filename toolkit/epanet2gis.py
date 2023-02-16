@@ -23,9 +23,9 @@ if not success:
     print(f'fatal: {val}', file=sys.stderr)
     sys.exit(1)
 
-nodes, edges = val
+nodes, links = val
 
-success, val = enu.graph_to_geojsons(nodes, edges, source_epsg)
+success, val = enu.graph_to_geojsons(nodes, links, source_epsg)
 if not success:
     print(f'fatal: {val}', file=sys.stderr)
     sys.exit(1)
@@ -33,11 +33,11 @@ if not success:
 if not os.path.exists(target_dir):
     os.makedirs(target_dir)
 
-nodes_geojson, edges_geojson = val
+nodes_geojson, links_geojson = val
 
 with open(target_dir + '/nodes.geojson', 'w') as f:
     json.dump(nodes_geojson, f)
 
-with open(target_dir + '/edges.geojson', 'w') as f:
-    json.dump(edges_geojson, f)
+with open(target_dir + '/links.geojson', 'w') as f:
+    json.dump(links_geojson, f)
 
