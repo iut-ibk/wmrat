@@ -103,20 +103,42 @@
 
     tilelayer.addTo(map);
 
-    //let color_ramp_dict = {{ color_ramp|safe }};
+    let colors = {{ colors|safe }};
 
-    var graph = {{ graph|safe }};
+    var links_geojson = {{ links|safe }};
+    var nodes_geojson = {{ nodes|safe }};
 
-    let links = L.geoJson(graph, {
-        /*
+    let links = L.geoJson(links_geojson, {
         style: function(feature) {
-            d = feature.properties.d;
-            return {color: color_ramp_dict[d] || '#000000'}
+            let link_type = feature.properties.type;
+            return {
+                color: colors[link_type], // || '#000000'
+                weight: 5,
+            }
         }
-        */
     });
 
     drawnItems.addLayer(links);
+
+    let nodes = L.geoJson(nodes_geojson, {
+        pointToLayer: function (feature, latlng) {
+            let node_type = feature.properties.type;
+            return L.circleMarker(latlng, {
+                // Stroke properties
+                color: colors[node_type], // || '#000000'
+                opacity: 0.75,
+                weight: 5,
+
+                // Fill properties
+                fillColor: '#5EA4D4',
+                fillOpacity: 1.0,
+
+                radius: 3
+            });
+        }
+    });
+
+    drawnItems.addLayer(nodes);
 
     map.fitBounds(drawnItems.getBounds());
 

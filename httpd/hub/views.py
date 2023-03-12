@@ -249,10 +249,23 @@ def explore(request, network_id):
 
     with open(network_path / 'gis' / 'links.geojson') as f:
         geojson_links = json.load(f)
+    with open(network_path / 'gis' / 'nodes.geojson') as f:
+        geojson_nodes = json.load(f)
+
+    colors = {
+        'PIPE': '#0000ff',
+        'PUMP': '#00ff00',
+        'VALVE': '#ff0000',
+        'JUNCTION': '#000099',
+        'RESERVOIR': '#990000',
+        'TANK': '#009900',
+    }
 
     context = {
         'page_title': 'WMRat: Explore Network',
-        'graph': geojson_links,
+        'links': geojson_links,
+        'nodes': geojson_nodes,
+        'colors': colors,
         'network': network,
     }
 

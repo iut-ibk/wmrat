@@ -1,4 +1,5 @@
 import wntr
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import rankdata
@@ -9,7 +10,7 @@ start_time = time.time()
 
 # Create a water network model
 
-inp_file = 'C:/Users/c8451349/Desktop/No_Valves/EPANET_Final/Simplified Models/Skeletal Model/No_Valves_No_Hydrants_WaterGEMS/WaterGEMS/Merge_Different_Pipe_diameters/No_valves_iteration_7_681_pipes_smart_pipe_removal_a.inp'
+inp_file = sys.argv[1]
 wn = wntr.network.WaterNetworkModel(inp_file)
 
 
@@ -63,7 +64,14 @@ for pipe_name in pipes:
     wn.add_control("close pipe" + pipe_name, ctrl)
 
     sim = wntr.sim.EpanetSimulator(wn)
-    results = sim.run_sim()
+
+    try:
+        results = sim.run_sim()
+    except Exception as e:
+        #XXX: maybe not save, but works for now: important: we *have* to reset state (to have clean simulation environment)
+        wn.remove_control("close pipe" + pipe_name)
+        print(f'something went wrong when running EPANET simulation, continue ... [pipe = {pipe_name}]', e)
+        continue
 
     # Extract te number of juctions that dip below the min. pressure threshold
     min_pressure = results.node["pressure"].loc[:, wn.junction_name_list].min()

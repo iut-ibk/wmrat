@@ -1,4 +1,5 @@
 from copy import deepcopy
+import sys
 from os import link
 from platform import node
 from turtle import clear, color
@@ -22,7 +23,7 @@ start_time = time.time()
 
 # Create a water network model (Anytown for faster analysis)
 
-f = open('C:/Users/c8451349/Desktop/No_Valves/EPANET_Final/Simplified Models/Skeletal Model/No_Valves_No_Hydrants_WaterGEMS/WaterGEMS/Merge_Different_Pipe_diameters/No_valves_iteration_7_681_pipes_smart_pipe_removal.inp')
+f = open(sys.argv[1])
 success, val = misc_light.swmm_input_read(f)
 network_graph = graph_editing.create_graph_of_epanet_file(val)
 
