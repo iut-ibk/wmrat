@@ -5,7 +5,8 @@ import json
 import time
 import wntr
 
-import pipe_criticality_analysis
+#import pipe_criticality_analysis
+import single_pipe_failure_graph
 
 if len(sys.argv) != 4:
     print(f'usage: {sys.argv[0]} <EPANET-input> <param-json> <outputdir>', file=sys.stderr)
@@ -33,7 +34,8 @@ except Exception as e:
 #TODO: probably branch here ...
 
 # run scenario
-success = pipe_criticality_analysis.run(epanet_bin_path, epanet_inp_path, param_dict, output_dir)
+#success = pipe_criticality_analysis.run(epanet_bin_path, epanet_inp_path, param_dict, output_dir)
+success = single_pipe_failure_graph.run(epanet_inp_path, param_dict, output_dir)
 
 # something went wrong
 if not success:

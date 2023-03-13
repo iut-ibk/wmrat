@@ -105,7 +105,7 @@ def visualize_result(request, scenario_id):
     new_results_name = f'{scenario.id}_{scenario.name}'.replace(' ', '_')
 
     #XXX: depending on scenario
-    json_path = scenario_path / new_results_name / 'nodes_affected_by_pipe_failure.json'
+    json_path = scenario_path / new_results_name / 'demand_impacted_graph.json'
 
     with open(json_path) as f:
         nodes_affected = json.load(f)
@@ -278,6 +278,12 @@ def new(request):
         arg_dict.pop('csrfmiddlewaretoken')
 
         network_id = int(arg_dict['network_id'])
+
+        sources = arg_dict['sources'].split(',')
+        print(sources)
+        arg_dict['sources'] = sources
+
+        print(arg_dict)
 
         #NOTE: we do not check input (rely on JS validation, but should do that here too)
         scenario = Scenario(
