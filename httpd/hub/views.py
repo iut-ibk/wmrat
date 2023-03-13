@@ -24,16 +24,16 @@ import sys
 import numpy as np
 import signal
 
-from hub.models import Scenario, WMNetwork
+from hub.models import Analysis, WMNetwork
 
 import epanet_util as enu
 
 @login_required
 def archive(request):
-    scenarios = Scenario.objects.filter()
-    scenarios = scenarios.order_by('-submitted')
+    analyses = Analysis.objects.filter()
+    analyses = analyses.order_by('-submitted')
 
-    paginator = Paginator(scenarios, settings.ROWS_PER_PAGE)
+    paginator = Paginator(analyses, settings.ROWS_PER_PAGE)
 
     page_nr = request.GET.get('p')
     page_obj = paginator.get_page(page_nr)
@@ -90,10 +90,10 @@ def epanet_archive(request):
     return render(request, 'epanet_archive.html', context)
 
 @login_required
-def visualize_result(request, scenario_id):
-    scenario = get_object_or_404(Scenario, id=scenario_id)
+def visualize_result(request, analysis_id):
+    analysis = get_object_or_404(Analysis, id=analysis_id)
 
-    network = scenario.wm_network
+    network = analysis.wm_network
 
     network_path = settings.WMRAT_NETWORK_DIR / str(network.id)
 
@@ -101,11 +101,11 @@ def visualize_result(request, scenario_id):
         geojson_links = json.load(f)
 
     #TODO: hacky ... (we do that 2x)
-    scenario_path = settings.WMRAT_SCENARIO_DIR / str(scenario.id)
-    new_results_name = f'{scenario.id}_{scenario.name}'.replace(' ', '_')
+    analysis_path = settings.WMRAT_ANALYSIS_DIR / str(analysis.id)
+    new_results_name = f'{analysis.id}_{analysis.name}'.replace(' ', '_')
 
-    #XXX: depending on scenario
-    json_path = scenario_path / new_results_name / 'demand_impacted_graph.json'
+    #XXX: depending on analysis
+    json_path = analysis_path / new_results_name / 'demand_impacted_graph.json'
 
     with open(json_path) as f:
         nodes_affected = json.load(f)
@@ -286,24 +286,24 @@ def new(request):
         print(arg_dict)
 
         #NOTE: we do not check input (rely on JS validation, but should do that here too)
-        scenario = Scenario(
-            name=arg_dict['scenario_name'],
-            proc_status=Scenario.STATUS_QUEUED,
+        analysis = Analysis(
+            name=arg_dict['analysis_name'],
+            proc_status=Analysis.STATUS_QUEUED,
             submitted=make_aware(dt.datetime.now()),
             user=request.user,
             duration_s=-1,
-            info_msg='Scenario created',
+            info_msg='Analysis created',
             input_json=arg_dict,
             wm_network=WMNetwork.objects.get(id=network_id),
         )
 
-        scenario.save()
+        analysis.save()
 
         queue = django_rq.get_queue('crunch')
-        job = queue.enqueue(do_run_analysis, scenario)
+        job = queue.enqueue(do_run_analysis, analysis)
 
-        scenario.job_id = job.id
-        scenario.save()
+        analysis.job_id = job.id
+        analysis.save()
 
         return HttpResponseRedirect(reverse('archive', args=()))
 
@@ -311,33 +311,33 @@ def new(request):
     networks = networks.order_by('-uploaded_at')
 
     context = {
-        'page_title': 'WMRat: New Scenario',
+        'page_title': 'WMRat: New Analysis',
         'networks': networks,
     }
 
     return render(request, 'new.html', context)
 
 @job
-def do_run_analysis(scenario):
+def do_run_analysis(analysis):
     then = dt.datetime.now()
 
-    scenario.proc_status = Scenario.STATUS_PROCESSING
-    scenario.info_msg = f'Running scenario "{scenario.name}" ...'
-    scenario.save()
+    analysis.proc_status = Analysis.STATUS_PROCESSING
+    analysis.info_msg = f'Running analysis "{analysis.name}" ...'
+    analysis.save()
 
-    scenario_path = settings.WMRAT_SCENARIO_DIR / str(scenario.id)
-    result_dir = scenario_path / 'results'
-    if not os.path.exists(scenario_path):
-        os.makedirs(scenario_path)
+    analysis_path = settings.WMRAT_ANALYSIS_DIR / str(analysis.id)
+    result_dir = analysis_path / 'results'
+    if not os.path.exists(analysis_path):
+        os.makedirs(analysis_path)
         os.makedirs(result_dir)
 
     # EPANET file
-    epanet_file_path = settings.WMRAT_NETWORK_DIR / str(scenario.wm_network.id) / 'network.inp'
+    epanet_file_path = settings.WMRAT_NETWORK_DIR / str(analysis.wm_network.id) / 'network.inp'
 
     # param JSON
-    input_json_path = scenario_path / 'param.json'
+    input_json_path = analysis_path / 'param.json'
     with open(input_json_path, 'w') as f:
-        f.write(json.dumps(scenario.input_json))
+        f.write(json.dumps(analysis.input_json))
 
     script = settings.TOOLKIT_PATH / 'main.py'
     args = ['python3', script, epanet_file_path, input_json_path, result_dir] #XXX: add json file
@@ -350,57 +350,57 @@ def do_run_analysis(scenario):
     #success = pipe_criticality_analysis.run(epanet_bin_path, epanet_inp_path, param_dict, output_dir)
 
     p = sp.Popen(args, stdout=sp.PIPE, stderr=sp.PIPE, env=tmp_env)
-    scenario.proc_pid = p.pid
-    scenario.save()
+    analysis.proc_pid = p.pid
+    analysis.save()
 
     out, err = p.communicate()
 
     # to get potential status change (user cancelled *running* job)
-    scenario.refresh_from_db()
+    analysis.refresh_from_db()
 
     elapsed_time_s = (dt.datetime.now() - then).total_seconds()
-    scenario.duration_s = elapsed_time_s
+    analysis.duration_s = elapsed_time_s
 
     if p.returncode != 0:
-        if scenario.proc_status == Scenario.STATUS_CANCELLING:
-            scenario.proc_status = Scenario.STATUS_CANCELLED
-            scenario.info_msg = f'Cancelled'
+        if analysis.proc_status == Analysis.STATUS_CANCELLING:
+            analysis.proc_status = Analysis.STATUS_CANCELLED
+            analysis.info_msg = f'Cancelled'
         else:
-            scenario.proc_status = Scenario.STATUS_FAILED
+            analysis.proc_status = Analysis.STATUS_FAILED
             if elapsed_time_s > settings.MAX_PROCESSING_TIME:
-                scenario.info_msg = f'Maximum execution time ({settings.MAX_PROCESSING_TIME}s) exceeded'
+                analysis.info_msg = f'Maximum execution time ({settings.MAX_PROCESSING_TIME}s) exceeded'
             else:
-                scenario.info_msg = f'Analysis failed [{p.returncode}]: {err.decode()}'
+                analysis.info_msg = f'Analysis failed [{p.returncode}]: {err.decode()}'
     else:
-        scenario.proc_status = Scenario.STATUS_SUCCESS
-        scenario.info_msg = f'Finished'
+        analysis.proc_status = Analysis.STATUS_SUCCESS
+        analysis.info_msg = f'Finished'
 
-    zip_scenario(scenario)
+    zip_analysis(analysis)
 
     #TODO: maybe delete potential temporary files
 
-    scenario.save()
+    analysis.save()
     return True #NOTE: yes?
 
-def zip_scenario(scenario):
-    scenario_path = settings.WMRAT_SCENARIO_DIR / str(scenario.id)
+def zip_analysis(analysis):
+    analysis_path = settings.WMRAT_ANALYSIS_DIR / str(analysis.id)
 
-    new_results_name = f'{scenario.id}_{scenario.name}'.replace(' ', '_')
+    new_results_name = f'{analysis.id}_{analysis.name}'.replace(' ', '_')
     zip_name = f'{new_results_name}.zip'
 
-    os.rename(scenario_path / 'results', scenario_path / new_results_name)
+    os.rename(analysis_path / 'results', analysis_path / new_results_name)
 
-    p = sp.Popen(['zip', '-r', zip_name, new_results_name], stdout=sp.PIPE, stderr=sp.PIPE, cwd=scenario_path)
+    p = sp.Popen(['zip', '-r', zip_name, new_results_name], stdout=sp.PIPE, stderr=sp.PIPE, cwd=analysis_path)
     out, err = p.communicate()
 
 @login_required
-def download(request, scenario_id):
-    scenario = get_object_or_404(Scenario, id=scenario_id)
+def download(request, analysis_id):
+    analysis = get_object_or_404(Analysis, id=analysis_id)
 
-    scenario_path = settings.WMRAT_SCENARIO_DIR / str(scenario.id)
+    analysis_path = settings.WMRAT_ANALYSIS_DIR / str(analysis.id)
 
-    name = f'{scenario.id}_{scenario.name}.zip'.replace(' ', '_')
-    path = scenario_path / name
+    name = f'{analysis.id}_{analysis.name}.zip'.replace(' ', '_')
+    path = analysis_path / name
 
     content_type = 'application/zip'
 
@@ -409,8 +409,8 @@ def download(request, scenario_id):
     return resp
 
 @login_required
-def delete(request, scenario_id):
-    scnenario = get_object_or_404(Scenario, id=scenario_id)
+def delete(request, analysis_id):
+    scnenario = get_object_or_404(Analysis, id=analysis_id)
 
     if scnenario.user.id != request.user.id:
         return HttpResponseForbidden('Forbidden')
@@ -418,49 +418,49 @@ def delete(request, scenario_id):
     scnenario.delete()
 
     queue = django_rq.get_queue('delete')
-    queue.enqueue(do_delete, scenario_id)
+    queue.enqueue(do_delete, analysis_id)
 
     return HttpResponseRedirect(reverse('archive', args=()))
 
 @job
-def do_delete(scenario_id):
-    scenario_path = settings.WMRAT_SCENARIO_DIR / str(scenario_id)
+def do_delete(analysis_id):
+    analysis_path = settings.WMRAT_ANALYSIS_DIR / str(analysis_id)
 
     # should exist, but check anyway
-    if os.path.exists(scenario_path):
-        shutil.rmtree(scenario_path)
+    if os.path.exists(analysis_path):
+        shutil.rmtree(analysis_path)
 
 @login_required
-def cancel(request, scenario_id):
-    scenario = get_object_or_404(Scenario, id=scenario_id)
+def cancel(request, analysis_id):
+    analysis = get_object_or_404(Analysis, id=analysis_id)
 
-    if scenario.user.id != request.user.id:
+    if analysis.user.id != request.user.id:
         return HttpResponseForbidden('Forbidden')
 
     # queued, but not run
-    if scenario.proc_status == Scenario.STATUS_QUEUED:
-        cancel_job(scenario.job_id, connection=django_rq.get_connection('crunch'))
-        scenario.proc_status = Scenario.STATUS_CANCELLED
-        scenario.info_msg = 'Cancelled'
+    if analysis.proc_status == Analysis.STATUS_QUEUED:
+        cancel_job(analysis.job_id, connection=django_rq.get_connection('crunch'))
+        analysis.proc_status = Analysis.STATUS_CANCELLED
+        analysis.info_msg = 'Cancelled'
 
     # running
-    elif scenario.proc_status == Scenario.STATUS_PROCESSING:
+    elif analysis.proc_status == Analysis.STATUS_PROCESSING:
         queue = django_rq.get_queue('cancel')
-        queue.enqueue(do_cancel, scenario)
+        queue.enqueue(do_cancel, analysis)
 
-        scenario.proc_status = Scenario.STATUS_CANCELLING
-        scenario.info_msg = 'Cancelling ...'
+        analysis.proc_status = Analysis.STATUS_CANCELLING
+        analysis.info_msg = 'Cancelling ...'
 
-    scenario.save()
+    analysis.save()
     return HttpResponseRedirect(reverse('archive', args=()))
 
 @job
-def do_cancel(scenario):
+def do_cancel(analysis):
     wait_time = 2 #XXX: can do that again?
     try:
         # kill process here (TODO: what if we don't find the pid?)
         # NOTE: we might not have the pid ... ?
-        os.kill(scenario.proc_pid, signal.SIGKILL)
+        os.kill(analysis.proc_pid, signal.SIGKILL)
     except Exception as e:
         #NOTE: what to do here?
         pass

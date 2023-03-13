@@ -9,7 +9,7 @@
 <main class="container">
     <div class="content">
 
-        <!-- scenario archive list -->
+        <!-- analysis archive list -->
         {% if page_obj %}
 
             <table class="table table-striped" style="margin-top: 32px;">
@@ -27,57 +27,57 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for scenario in page_obj %}
+                    {% for analysis in page_obj %}
                     <tr>
-                        <!-- scenario meta information -->
-                        <td class="align-middle">{{ scenario.id }}</td>
-                        <td class="align-middle">{{ scenario.name }}</td>
-                        <td class="align-middle">{{ scenario.submitted|date:"Y.m.d" }}</td>
+                        <!-- analysis meta information -->
+                        <td class="align-middle">{{ analysis.id }}</td>
+                        <td class="align-middle">{{ analysis.name }}</td>
+                        <td class="align-middle">{{ analysis.submitted|date:"Y.m.d" }}</td>
 
                         <!-- status -->
-                        {% if scenario.proc_status == 0 %}
+                        {% if analysis.proc_status == 0 %}
                         <td class="align-middle">
-                            <button class="btn btn-success btn-sm" type="button" disabled>{{ scenario.get_scenario_status_str }}</button>
+                            <button class="btn btn-success btn-sm" type="button" disabled>{{ analysis.get_analysis_status_str }}</button>
                         </td>
-                        {% elif scenario.proc_status == 1 %}
+                        {% elif analysis.proc_status == 1 %}
                         <td class="align-middle">
-                            <button class="btn btn-danger btn-sm" type="button" disabled>{{ scenario.get_scenario_status_str }}</button>
+                            <button class="btn btn-danger btn-sm" type="button" disabled>{{ analysis.get_analysis_status_str }}</button>
                         </td>
-                        {% elif scenario.proc_status == 2 %}
+                        {% elif analysis.proc_status == 2 %}
                         <td class="align-middle">
-                            <button class="btn btn-warning btn-sm" type="button" disabled>{{ scenario.get_scenario_status_str }}</button>
+                            <button class="btn btn-warning btn-sm" type="button" disabled>{{ analysis.get_analysis_status_str }}</button>
                         </td>
-                        {% elif scenario.proc_status == 3 %}
+                        {% elif analysis.proc_status == 3 %}
                         <td class="align-middle">
-                            <button class="btn btn-primary btn-sm" type="button" disabled><span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"></span> {{ scenario.get_scenario_status_str }}</button>
+                            <button class="btn btn-primary btn-sm" type="button" disabled><span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"></span> {{ analysis.get_analysis_status_str }}</button>
                         </td>
-                        {% elif scenario.proc_status == 4 %}
+                        {% elif analysis.proc_status == 4 %}
                         <td class="align-middle">
-                            <button class="btn btn-warning btn-sm" type="button" disabled>{{ scenario.get_scenario_status_str }}</button>
+                            <button class="btn btn-warning btn-sm" type="button" disabled>{{ analysis.get_analysis_status_str }}</button>
                         </td>
                         {% else %}
                         <td class="align-middle">
-                            <button class="btn btn-warning btn-sm" type="button" disabled><span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"></span> {{ scenario.get_scenario_status_str }}</button>
+                            <button class="btn btn-warning btn-sm" type="button" disabled><span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"></span> {{ analysis.get_analysis_status_str }}</button>
                         </td>
                         {% endif %}
 
                         <!-- info -->
-                        <td class="align-middle">{{ scenario.info_msg }}{% if scenario.proc_status == 0 or scenario.proc_status == 1 %} ({{ scenario.duration_s|floatformat:0 }}s) {% endif %}</td>
+                        <td class="align-middle">{{ analysis.info_msg }}{% if analysis.proc_status == 0 or analysis.proc_status == 1 %} ({{ analysis.duration_s|floatformat:0 }}s) {% endif %}</td>
 
                         <!-- visualize -->
-                        {% if scenario.proc_status == 0 or scenario.proc_status == 1 %}
-                        <td class="align-middle"><a class="text-decoration-none" href="scenario/{{scenario.id}}/visualize"><i class="fas fa-eye"></i> show</a></td>
+                        {% if analysis.proc_status == 0 or analysis.proc_status == 1 %}
+                        <td class="align-middle"><a class="text-decoration-none" href="analysis/{{analysis.id}}/visualize"><i class="fas fa-eye"></i> show</a></td>
                         {% else %}
                         <td></td>
                         {% endif %}
                         
                         <!-- cancel -->
-                        {% if scenario.proc_status == 2 or scenario.proc_status == 3 %}
+                        {% if analysis.proc_status == 2 or analysis.proc_status == 3 %}
                         <td class="align-middle">
-                            {% if user.id == scenario.user.id or user.is_superuser %}
-                            <form method="post" action=" {% url 'cancel' scenario_id=scenario.id %}">
+                            {% if user.id == analysis.user.id or user.is_superuser %}
+                            <form method="post" action=" {% url 'cancel' analysis_id=analysis.id %}">
                                 {% csrf_token %}
-                                {% if scenario.proc_status == 2 %}
+                                {% if analysis.proc_status == 2 %}
                                 <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-stop"></i> cancel</button>
                                 {% else %}
                                 <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-stop"></i> stop</button>
@@ -90,17 +90,17 @@
                         {% endif %}
 
                         <!-- download -->
-                        {% if scenario.proc_status == 0 or scenario.proc_status == 1 %}
-                        <td class="align-middle"><a class="text-decoration-none" href="scenario/{{scenario.id}}/download"><i class="fas fa-download"></i> download</a></td>
+                        {% if analysis.proc_status == 0 or analysis.proc_status == 1 %}
+                        <td class="align-middle"><a class="text-decoration-none" href="analysis/{{analysis.id}}/download"><i class="fas fa-download"></i> download</a></td>
                         {% else %}
                         <td></td>
                         {% endif %}
 
                         <!-- delete -->
-                        {% if scenario.proc_status == 0 or scenario.proc_status == 1 or scenario.proc_status == 4 %}
+                        {% if analysis.proc_status == 0 or analysis.proc_status == 1 or analysis.proc_status == 4 %}
                         <td class="align-middle">
-                            {% if user.id == scenario.user.id or user.is_superuser %}
-                            <form method="post" action=" {% url 'delete' scenario_id=scenario.id %}">
+                            {% if user.id == analysis.user.id or user.is_superuser %}
+                            <form method="post" action=" {% url 'delete' analysis_id=analysis.id %}">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-warning btn-sm"><i class="fas fa-trash-can"></i> delete</button>
                             </form>
@@ -137,7 +137,7 @@
                    </ul>
                </nav>
 
-                <p style="text-align: center; font-size: 14px">{{page_obj.paginator.count}} scenario{% if page_obj.paginator.count > 1 %}s{% endif %}</p>
+               <p style="text-align: center; font-size: 14px">{{page_obj.paginator.count}} analys{% if page_obj.paginator.count > 1 %}es{% else %}is{% endif %}</p>
 
                 <div class="col-sm-4">
                 </div>
@@ -145,7 +145,7 @@
             </div>
 
         {% else %}
-            <p style="margin-top: 32px; text-align: center;">No scenarios. ☹️</p>
+            <p style="margin-top: 32px; text-align: center;">No analyses. ☹️</p>
         {% endif %}
 
     </div>

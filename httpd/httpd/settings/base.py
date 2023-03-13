@@ -34,9 +34,9 @@ WMRAT_DATA_HOME = Path(__file__).resolve().parent.parent.parent.parent / 'appdat
 if not os.path.exists(WMRAT_DATA_HOME):
     os.makedirs(WMRAT_DATA_HOME)
 
-WMRAT_SCENARIO_DIR = WMRAT_DATA_HOME / 'scenarios'
-if not os.path.exists(WMRAT_SCENARIO_DIR):
-    os.makedirs(WMRAT_SCENARIO_DIR)
+WMRAT_ANALYSIS_DIR = WMRAT_DATA_HOME / 'analyses'
+if not os.path.exists(WMRAT_ANALYSIS_DIR):
+    os.makedirs(WMRAT_ANALYSIS_DIR)
 
 WMRAT_NETWORK_DIR = WMRAT_DATA_HOME / 'networks'
 if not os.path.exists(WMRAT_NETWORK_DIR):

@@ -20,8 +20,8 @@ class WMNetwork(models.Model):
     # upload date
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
-class Scenario(models.Model):
-    # scenario name
+class Analysis(models.Model):
+    # analysis name
     name = models.CharField(max_length=64)
 
     # user
@@ -68,6 +68,6 @@ class Scenario(models.Model):
     # info message
     info_msg = models.CharField(max_length=256)
 
-    def get_scenario_status_str(self):
-        return Scenario.STATUS[self.proc_status][1]
+    def get_analysis_status_str(self):
+        return Analysis.STATUS[self.proc_status][1]
 

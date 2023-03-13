@@ -17,26 +17,26 @@ urlpatterns = [
     # explore network
     path('network/<int:network_id>/explore', views.explore, name='explore'),
 
-    # scenario archive
+    # analysis archive
     path('archive', views.archive, name='archive'),
 
     # hub
     path('hub', views.archive, name='hub'),
 
-    # new scenario
+    # new analysis
     path('new', views.new, name='new'),
 
-    # download scenario
-    path('scenario/<int:scenario_id>/download', views.download, name='download'),
+    # download analysis
+    path('analysis/<int:analysis_id>/download', views.download, name='download'),
 
-    # delete scenario
-    path('scenario/<int:scenario_id>/delete', views.delete, name='delete'),
+    # delete analysis
+    path('analysis/<int:analysis_id>/delete', views.delete, name='delete'),
 
-    # cancel scenario
-    path('scenario/<int:scenario_id>/cancel', views.cancel, name='cancel'),
+    # cancel analysis
+    path('analysis/<int:analysis_id>/cancel', views.cancel, name='cancel'),
 
     # visualize result
-    path('scenario/<int:scenario_id>/visualize', views.visualize_result, name='visualize_result'),
+    path('analysis/<int:analysis_id>/visualize', views.visualize_result, name='visualize_result'),
 
     # utilize built-in login/logout views
     path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
