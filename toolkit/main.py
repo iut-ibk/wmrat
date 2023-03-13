@@ -6,7 +6,7 @@ import time
 import wntr
 
 #import pipe_criticality_analysis
-import single_pipe_failure_graph
+import analysis.single_pipe_failure_graph.run as single_pipe_failure_graph
 
 if len(sys.argv) != 4:
     print(f'usage: {sys.argv[0]} <EPANET-input> <param-json> <outputdir>', file=sys.stderr)
