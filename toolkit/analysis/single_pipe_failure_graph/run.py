@@ -41,7 +41,7 @@ def run(epanet_inp_path, param_dict, output_dir):
 
     # Calculating pressure losses
     hv = copy.deepcopy(weights)
-    lam = float(param_dict['lam'])
+    lam = float(param_dict['lambda'])
     hv.update((key, value * lam / (2 * 9.81)) for key, value in hv.items())
     Hv = {key: hv[key] / (C_max.get(key, 0)**2/4000000 * math.pi)**2 for key in hv}
     

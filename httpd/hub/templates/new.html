@@ -20,7 +20,6 @@
                         <input type="text" class="form-control" id="analysis_name" name="analysis_name" value="Test Analysis">
                     </div>
 
-                    <!-- TODO: for/name correct? -->
                     <div class="col-md-6">
                         <label for="network_id" class="form-label">Network</label>
                         <select name="network_id" class="form-select" aria-label="Default select example">
@@ -31,30 +30,12 @@
                         </select>
                     </div>
 
-                    <!-- XXX labels, etc. (just copied ...) -->
-                    <!--
-                    <div class="col-md-3">
-                        <label for="category_name" class="form-label">Category</label>
-                        <select class="form-select" aria-label="Default select example">
-                            <option selected>Infrastructure failure</option>
-                            <option value="1">Natural disaster</option>
-                            <option value="2">Contamination</option>
-                            <option value="3">Physical attack</option>
-                            <option value="blupp">Pandemic</option>
-                            <option value="bla">Digital incident</option>
-                            <option value="7">Other</option>
-                        </select>
-                    </div>
-                    -->
-
-                    <!-- XXX labels, etc. (just copied ...) -->
-
-                    <!-- TODO: for/name correct? -->
                     <div class="col-md-3">
                         <label for="analysis_type" class="form-label">Analysis Type</label>
-                        <select name="analysis_type" class="form-select" aria-label="Default select example">
-                            <!-- TODO -->
-                            <option value="pipe_criticality">Pipe Criticality</option>
+                        <select id ="analysis_select" name="analysis_type" class="form-select" aria-label="Default select example" onchange="change_analysis_type(event.target.value)">
+                            {% for a_key, a_val in analyses_info.items %}
+                                <option value="{{ a_key }}">{{ a_val.pretty }}</option>
+                            {% endfor %}
                         </select>
                     </div>
 
@@ -64,15 +45,18 @@
 
                     <hr />
 
-                    <div class="col-md-12">
-                        <label for="lam" class="form-label">Analysis duration</label>
-                        <input type="text" class="form-control" id="lam" name="lam" value="0.13">
-                    </div>
+                    {% for a_key, a_val in analyses_info.items %}
+                    <div class="argdiv hidden" id="{{ a_key }}">
 
-                    <div class="col-md-12">
-                        <label for="sources" class="form-label">Min. required pressure</label>
-                        <input type="text" class="form-control" id="sources" name="sources" value="HB_Pirchanger,HB_Schmadl,HB_Pertrach,HB_Kraken">
+                    {% for param_name, param_info in a_val.params.items %}
+                    <div class="col-md-12" style="margin-top: 4px;">
+                        <label for="{{param_name}}" class="form-label">{{ param_info.pretty }}</label>
+                        <input type="text" class="form-control" id="{{param_name}}" name="{{param_name}}" value="0.13">
                     </div>
+                    {% endfor %}
+
+                    </div>
+                    {% endfor %}
 
                 </form>
 
@@ -89,7 +73,39 @@
     </div>
 </main>
 
+<style>
+.hidden {
+    display: none;
+}
+</style>
+
 <script>
+    const argdivs = document.querySelectorAll("div.argdiv");
+
+    const analysis_select = document.getElementById("analysis_select");
+
+    let analyses_info = {{ analyses_info|safe }};
+
+    function change_analysis_type(value) {
+        //console.log(value);
+        argdivs.forEach(div => {
+            div.classList.add("hidden");
+
+            const inputs = div.querySelectorAll('input');
+            inputs.forEach(input => {
+                input.disabled = true;
+            });
+        });
+
+        const selectedDiv = document.getElementById(value);
+        selectedDiv.classList.remove("hidden");
+
+        const inputs = selectedDiv.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.disabled = false;
+        });
+    }
+
     function setAlert(text) {
         var t = document.getElementById('alert-ui');
         t.style.display = '';
@@ -110,6 +126,12 @@
 
     checkInput();
 
+    /* initial div */
+    initial_analysis = Object.keys(analyses_info)[0]
+    analysis_select.value = initial_analysis;
+    change_analysis_type(initial_analysis);
+
 </script>
 
 {% endblock %}
+

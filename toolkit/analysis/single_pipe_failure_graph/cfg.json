@@ -1,9 +1,0 @@
-{
-    "lam": 0.13,
-    "sources": [
-        "node_a",
-        "node_b",
-        "node_c",
-        "node_d"
-    ]
-}

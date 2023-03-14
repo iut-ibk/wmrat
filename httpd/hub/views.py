@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest, HttpResponseServerError
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from django.utils.timezone import make_aware
@@ -15,6 +15,7 @@ from rq import cancel_job
 import datetime as dt
 import json
 import uuid
+import glob
 import os
 import subprocess as sp
 from pathlib import Path
@@ -273,19 +274,60 @@ def explore(request, network_id):
 
 @login_required
 def new(request):
+    # get all supported analyses
+    param_jsons = list(glob.glob(str(settings.WMRAT_ANALYSIS_TOOLKIT_DIR) + '/*/param.json'))
+    if len(param_jsons) == 0:
+        return HttpResponseServerError('no supported analyses found')
+
+    print(f'{len(param_jsons)} analyses found', file=sys.stderr)
+
+    # make information dictionary about these
+    analyses_info_dict = {}
+    for param_json_path in param_jsons:
+        key = os.path.basename(Path(param_json_path).parent)
+
+        #XXX: probably add from ex1 here?
+
+        try:
+            with open(param_json_path) as f:
+                analysis_info = json.load(f)
+        except Exception as e:
+            return HttpResponseServerError(f'{parm_json_path}: parse error')
+
+        analyses_info_dict[key] = analysis_info
+
+    #print(analyses_info_dict)
+
     if request.method == 'POST':
-        arg_dict = request.POST.dict()
-        arg_dict.pop('csrfmiddlewaretoken')
+        submitted_dict = request.POST.dict()
+        #submitted_dict.pop('csrfmiddlewaretoken')
 
-        network_id = int(arg_dict['network_id'])
+        network_id = int(submitted_dict['network_id'])
 
-        sources = arg_dict['sources'].split(',')
-        print(sources)
-        arg_dict['sources'] = sources
+        #XXX: we do not check input (rely on JS validation, but should do that here too)
+        analysis_type = submitted_dict['analysis_type']
 
+        arg_dict = {
+            'analysis_name': submitted_dict['analysis_name']
+        }
+
+        for param_key, param_val in analyses_info_dict[analysis_type]['params'].items():
+            if param_val['type'] == 'FLOAT':
+                try:
+                    val = float(submitted_dict[param_key])
+                    arg_dict[param_key] = val
+                except ValueError as e:
+                    return HttpResponseBadRequest(f'{param_key} must be a floating point number')
+
+            elif param_val['type'] == 'ARRAY':
+                vals = submitted_dict[param_key].split(',')
+                if len(vals) == 0:
+                    return HttpResponseBadRequest(f'{param_key} must be a list of strings')
+
+                arg_dict[param_key] = vals
+        
         print(arg_dict)
 
-        #NOTE: we do not check input (rely on JS validation, but should do that here too)
         analysis = Analysis(
             name=arg_dict['analysis_name'],
             proc_status=Analysis.STATUS_QUEUED,
@@ -313,6 +355,7 @@ def new(request):
     context = {
         'page_title': 'WMRat: New Analysis',
         'networks': networks,
+        'analyses_info': analyses_info_dict,
     }
 
     return render(request, 'new.html', context)

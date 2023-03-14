@@ -42,6 +42,8 @@ WMRAT_NETWORK_DIR = WMRAT_DATA_HOME / 'networks'
 if not os.path.exists(WMRAT_NETWORK_DIR):
     os.makedirs(WMRAT_NETWORK_DIR)
 
+WMRAT_ANALYSIS_TOOLKIT_DIR = Path(__file__).resolve().parent.parent.parent.parent / 'toolkit' / 'analysis'
+
 INSTALLED_APPS = [
     'hub.apps.HubConfig',
     'django_rq',
