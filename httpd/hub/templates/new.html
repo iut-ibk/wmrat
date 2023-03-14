@@ -51,7 +51,7 @@
                     {% for param_name, param_info in a_val.params.items %}
                     <div class="col-md-12" style="margin-top: 4px;">
                         <label for="{{param_name}}" class="form-label">{{ param_info.pretty }}</label>
-                        <input type="text" class="form-control" id="{{param_name}}" name="{{param_name}}" value="0.13">
+                        <input type="text" class="form-control" id="{{param_name}}" name="{{param_name}}" value="{{ param_info.default }}">
                     </div>
                     {% endfor %}
 

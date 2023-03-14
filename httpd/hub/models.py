@@ -24,6 +24,9 @@ class Analysis(models.Model):
     # analysis name
     name = models.CharField(max_length=64)
 
+    # analysis type
+    analysis_type = models.CharField(max_length=64)
+
     # user
     user = models.ForeignKey(WMRatUser, on_delete=models.RESTRICT)
 

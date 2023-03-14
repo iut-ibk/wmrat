@@ -5,22 +5,17 @@ import json
 import time
 import wntr
 
-#import pipe_criticality_analysis
 import analysis.single_pipe_failure_graph.run as single_pipe_failure_graph
+import analysis.single_pipe_failure_epanet.run as single_pipe_failure_epanet
 
-if len(sys.argv) != 4:
-    print(f'usage: {sys.argv[0]} <EPANET-input> <param-json> <outputdir>', file=sys.stderr)
+if len(sys.argv) != 5:
+    print(f'usage: {sys.argv[0]} <analysis-type> <epanet-input> <param-json> <outputdir>', file=sys.stderr)
     sys.exit(1)
 
-epanet_inp_path = sys.argv[1]
-json_path = sys.argv[2]
-output_dir = sys.argv[3]
-
-if 'EPANET_BIN_PATH' not in os.environ:
-    print(f'fatal: EPANET_BIN_PATH not set', file=sys.stderr)
-    sys.exit(1)
-
-epanet_bin_path = os.environ['EPANET_BIN_PATH']
+analysis_type = sys.argv[1]
+epanet_inp_path = sys.argv[2]
+json_path = sys.argv[3]
+output_dir = sys.argv[4]
 
 # parse param json
 try:
@@ -28,19 +23,24 @@ try:
         param_dict = json.load(f)
 
 except Exception as e:
-    print(f'fatal: error in parameter json: {e}', file=sys.stderr)
+    print(f'error: error in parameter json: {e}', file=sys.stderr)
     sys.exit(1)
 
-#TODO: probably branch here ...
+if analysis_type == 'single_pipe_failure_graph':
+    run = single_pipe_failure_graph.run
+elif analysis_type == 'single_pipe_failure_epanet':
+    run = single_pipe_failure_epanet.run
+else:
+    print(f'error: no such analysis: {analysis_type}', file=sys.stderr)
+    sys.exit(1)
 
-# run scenario
-#success = pipe_criticality_analysis.run(epanet_bin_path, epanet_inp_path, param_dict, output_dir)
-success = single_pipe_failure_graph.run(epanet_inp_path, param_dict, output_dir)
+# run analysis
+success = run(epanet_inp_path, param_dict, output_dir)
 
 # something went wrong
 if not success:
-    print(f'fatal: analysis failed', file=sys.stderr)
+    print(f'error: analysis failed', file=sys.stderr)
     sys.exit(1)
 
-# ... otherwise exit (0)
+# ... otherwise succeed
 

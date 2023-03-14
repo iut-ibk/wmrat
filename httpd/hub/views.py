@@ -286,15 +286,32 @@ def new(request):
     for param_json_path in param_jsons:
         key = os.path.basename(Path(param_json_path).parent)
 
-        #XXX: probably add from ex1 here?
-
         try:
             with open(param_json_path) as f:
                 analysis_info = json.load(f)
         except Exception as e:
-            return HttpResponseServerError(f'{parm_json_path}: parse error')
+            return HttpResponseServerError(f'{param_json_path}: parse error')
+
+        ex_path = Path(param_json_path).parent / 'ex1.json'
+        try:
+            with open(ex_path) as f:
+                ex_info = json.load(f)
+        except Exception as e:
+            return HttpResponseServerError(f'{ex_path}: parse error')
+
+        #NOTE: guard against typos, etc.:
+        if set(analysis_info['params'].keys()) != set(ex_info.keys()):
+            return HttpResponseServerError(f'{key}: parameter mismatch')
+
+        for key_name, key_val in ex_info.items():
+            if analysis_info['params'][key_name]['type'] == 'ARRAY':
+                analysis_info['params'][key_name]['default'] = ','.join(key_val)
+            else:
+                analysis_info['params'][key_name]['default'] = key_val
 
         analyses_info_dict[key] = analysis_info
+
+    print(analyses_info_dict)
 
     #print(analyses_info_dict)
 
@@ -307,9 +324,7 @@ def new(request):
         #XXX: we do not check input (rely on JS validation, but should do that here too)
         analysis_type = submitted_dict['analysis_type']
 
-        arg_dict = {
-            'analysis_name': submitted_dict['analysis_name']
-        }
+        arg_dict = {}
 
         for param_key, param_val in analyses_info_dict[analysis_type]['params'].items():
             if param_val['type'] == 'FLOAT':
@@ -325,11 +340,14 @@ def new(request):
                     return HttpResponseBadRequest(f'{param_key} must be a list of strings')
 
                 arg_dict[param_key] = vals
+
+            #TODO: string? probably don't have to support other types ...
         
-        print(arg_dict)
+        #print(arg_dict)
 
         analysis = Analysis(
-            name=arg_dict['analysis_name'],
+            name=submitted_dict['analysis_name'],
+            analysis_type=submitted_dict['analysis_type'],
             proc_status=Analysis.STATUS_QUEUED,
             submitted=make_aware(dt.datetime.now()),
             user=request.user,
@@ -383,16 +401,13 @@ def do_run_analysis(analysis):
         f.write(json.dumps(analysis.input_json))
 
     script = settings.TOOLKIT_PATH / 'main.py'
-    args = ['python3', script, epanet_file_path, input_json_path, result_dir] #XXX: add json file
+    args = ['python3', script, analysis.analysis_type, epanet_file_path, input_json_path, result_dir]
 
-    #NOTE: currently we do it like that ...
-    tmp_env = os.environ.copy()
-    tmp_env['EPANET_BIN_PATH'] = settings.EPANET_BIN_PATH
+    #tmp_env = os.environ.copy()
+    #tmp_env['EPANET_BIN_PATH'] = settings.EPANET_BIN_PATH
+    #p = sp.Popen(args, stdout=sp.PIPE, stderr=sp.PIPE, env=tmp_env)
 
-    #NOTE: ... but could also do it somehow like this:
-    #success = pipe_criticality_analysis.run(epanet_bin_path, epanet_inp_path, param_dict, output_dir)
-
-    p = sp.Popen(args, stdout=sp.PIPE, stderr=sp.PIPE, env=tmp_env)
+    p = sp.Popen(args, stdout=sp.PIPE, stderr=sp.PIPE)
     analysis.proc_pid = p.pid
     analysis.save()
 

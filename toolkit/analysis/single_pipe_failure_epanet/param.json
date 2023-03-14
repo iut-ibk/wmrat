@@ -1,0 +1,26 @@
+{
+    "pretty": "Single pipe failure (EPANET)",
+    "params": {
+        "duration": {
+            "pretty": "Duration",
+            "type": "FLOAT"
+        },
+        "required_pressure": {
+            "pretty": "Required pressure",
+            "type": "FLOAT"
+        },
+        "min_diameter": {
+            "pretty": "Min. diameter",
+            "type": "FLOAT"
+        },
+        "pressure_threshold": {
+            "pretty": "Pressure threshold",
+            "type": "FLOAT"
+        },
+        "pressure_threshold_abnormal": {
+            "pretty": "Pressure threshold (abnormal)",
+            "type": "FLOAT"
+        }
+    }
+}
+
