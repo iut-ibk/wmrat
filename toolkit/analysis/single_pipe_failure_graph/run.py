@@ -245,8 +245,8 @@ def run(epanet_inp_path, param_dict, output_dir):
     for key, val in M_failure_names.items():
         M_failure_int[key] = int(val)
 
-    demand_impacted_graph_path = output_dir + '/demand_impacted_graph.json'
-    with open(demand_impacted_graph_path, 'w') as f:
+    demand_impacted_path = output_dir + '/links.json'
+    with open(demand_impacted_path, 'w') as f:
         f.write(json.dumps(M_failure_int))
     
     #demand_impacted_output = pd.DataFrame.from_dict(Failure_EBCQ, orient="index")

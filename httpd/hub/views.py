@@ -105,23 +105,36 @@ def visualize_result(request, analysis_id):
     analysis_path = settings.WMRAT_ANALYSIS_DIR / str(analysis.id)
     new_results_name = f'{analysis.id}_{analysis.name}'.replace(' ', '_')
 
-    #XXX: depending on analysis
-    json_path = analysis_path / new_results_name / 'demand_impacted_graph.json'
+    success, val = get_analyses_info_dict_with_defaults()
+    if not success:
+        err_str = val
+        return HttpResponseServerError(err_str)
 
+    analyses_info_all = val
+    analyses_info = analyses_info_all[analysis.analysis_type]
+
+    file_name = analyses_info['output']['file_name']
+    property_name = analyses_info['output']['property_name']
+
+    json_path = analysis_path / new_results_name / file_name
+
+    #XXX: currently we only support to append to links
     with open(json_path) as f:
-        nodes_affected = json.load(f)
+        links = json.load(f)
 
-    max_affected = max(nodes_affected.values())
+    #print(links)
+
+    max_affected = max(links.values())
     print(max_affected)
 
     for link in geojson_links['features']:
         link_name = link['properties']['id']
-        if link_name in nodes_affected:
-            count = nodes_affected[link_name]
+        if link_name in links:
+            val = links[link_name]
         else:
-            count = 0 #XXX: not really correct, but fow now ...
+            val = 0 #XXX: not really correct, but fow now ...
 
-        link['properties']['nodes_affected'] = count
+        link['properties'][property_name] = val
 
     n_ranges = 25
     ranges = []
@@ -142,6 +155,47 @@ def visualize_result(request, analysis_id):
     }
 
     return render(request, 'visualize_result.html', context)
+
+def get_analyses_info_dict_with_defaults():
+    # get all supported analyses
+    spec_jsons = list(glob.glob(str(settings.WMRAT_ANALYSIS_TOOLKIT_DIR) + '/*/spec.json'))
+    if len(spec_jsons) == 0:
+        return HttpResponseServerError('no supported analyses found')
+
+    print(f'{len(spec_jsons)} analyses found', file=sys.stderr)
+
+    # make information dictionary about these
+    analyses_info_dict = {}
+    for spec_json_path in spec_jsons:
+        key = os.path.basename(Path(spec_json_path).parent)
+
+        try:
+            with open(spec_json_path) as f:
+                analysis_info = json.load(f)
+        except Exception as e:
+            return False, f'{spec_json_path}: parse error'
+
+        ex_path = Path(spec_json_path).parent / 'ex1.json'
+        try:
+            with open(ex_path) as f:
+                ex_info = json.load(f)
+        except Exception as e:
+            return False, f'{ex_path}: parse error'
+
+        #NOTE: guard against typos, etc.:
+        if set(analysis_info['params'].keys()) != set(ex_info.keys()):
+            return False, f'{key}: parameter mismatch'
+
+        for key_name, key_val in ex_info.items():
+            if analysis_info['params'][key_name]['type'] == 'ARRAY':
+                analysis_info['params'][key_name]['default'] = ','.join(key_val)
+            else:
+                analysis_info['params'][key_name]['default'] = key_val
+
+        analyses_info_dict[key] = analysis_info
+
+    #print(analyses_info_dict)
+    return True, analyses_info_dict
 
 def make_red_green_color_ramp_dict(parts):
     n = len(parts)
@@ -274,46 +328,12 @@ def explore(request, network_id):
 
 @login_required
 def new(request):
-    # get all supported analyses
-    spec_jsons = list(glob.glob(str(settings.WMRAT_ANALYSIS_TOOLKIT_DIR) + '/*/spec.json'))
-    if len(spec_jsons) == 0:
-        return HttpResponseServerError('no supported analyses found')
+    success, val = get_analyses_info_dict_with_defaults()
+    if not success:
+        err_str = val
+        return HttpResponseServerError(err_str)
 
-    print(f'{len(spec_jsons)} analyses found', file=sys.stderr)
-
-    # make information dictionary about these
-    analyses_info_dict = {}
-    for spec_json_path in spec_jsons:
-        key = os.path.basename(Path(spec_json_path).parent)
-
-        try:
-            with open(spec_json_path) as f:
-                analysis_info = json.load(f)
-        except Exception as e:
-            return HttpResponseServerError(f'{spec_json_path}: parse error')
-
-        ex_path = Path(spec_json_path).parent / 'ex1.json'
-        try:
-            with open(ex_path) as f:
-                ex_info = json.load(f)
-        except Exception as e:
-            return HttpResponseServerError(f'{ex_path}: parse error')
-
-        #NOTE: guard against typos, etc.:
-        if set(analysis_info['params'].keys()) != set(ex_info.keys()):
-            return HttpResponseServerError(f'{key}: parameter mismatch')
-
-        for key_name, key_val in ex_info.items():
-            if analysis_info['params'][key_name]['type'] == 'ARRAY':
-                analysis_info['params'][key_name]['default'] = ','.join(key_val)
-            else:
-                analysis_info['params'][key_name]['default'] = key_val
-
-        analyses_info_dict[key] = analysis_info
-
-    print(analyses_info_dict)
-
-    #print(analyses_info_dict)
+    analyses_info_dict = val
 
     if request.method == 'POST':
         submitted_dict = request.POST.dict()

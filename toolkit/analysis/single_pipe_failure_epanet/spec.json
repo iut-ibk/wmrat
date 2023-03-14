@@ -21,6 +21,12 @@
             "pretty": "Pressure threshold (abnormal)",
             "type": "FLOAT"
         }
+    },
+    "output": {
+        "wdn_type": "LINK",
+        "file_name": "links.json",
+        "pretty": "Number of impacted nodes",
+        "property": "number_of_impacted_nodes"
     }
 }
 

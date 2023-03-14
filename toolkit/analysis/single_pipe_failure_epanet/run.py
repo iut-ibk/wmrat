@@ -2,6 +2,7 @@ import wntr
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
+import json
 import os
 from scipy.stats import rankdata
 import pandas as pd
@@ -86,8 +87,8 @@ def run(epanet_inp_path, param_dict, output_dir):
     #number_of_junctions_impacted = dict([(k, len(v)) for k,v in junctions_impacted.items()])
     
     N1 = list(dict.values(demand_impacted))
-    int = 7
-    N1 = [x / int for x in N1]
+    int_ = 7
+    N1 = [x / int_ for x in N1]
     N1 = [0.5 if x==0 else x for x in N1]
     
     wntr.graphics.plot_network(wn, link_attribute=demand_impacted, node_size=0, link_width=N1, title="Not delivered demand\nfor each pipe closure")
@@ -95,9 +96,18 @@ def run(epanet_inp_path, param_dict, output_dir):
     
     # Create pipe ranking and getting the 5 most critical pipes 
     M_failure = dict(zip(demand_impacted.keys(), rankdata([-i for i in demand_impacted.values()], method='min')))
-    Most_critical_pipes = sorted(M_failure, key=M_failure.get, reverse = False)[:5]
-    print('The Most Critcal Pipes are:', Most_critical_pipes)
+    #Most_critical_pipes = sorted(M_failure, key=M_failure.get, reverse = False)[:5]
+    #print('The Most Critcal Pipes are:', Most_critical_pipes)
     
+    # rewrite values to int()
+    M_failure_int = {}
+    for key, val in M_failure.items():
+        M_failure_int[key] = int(val)
+
+    demand_impacted_path = output_dir + '/links.json'
+    with open(demand_impacted_path, 'w') as f:
+        f.write(json.dumps(M_failure_int))
+
     demand_impacted_output = pd.DataFrame.from_dict(demand_impacted, orient="index")
     demand_impacted_output.to_csv("demand_impacted.csv", sep=';')
     

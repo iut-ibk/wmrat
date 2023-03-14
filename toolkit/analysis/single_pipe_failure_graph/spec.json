@@ -9,6 +9,12 @@
             "pretty": "Sources",
             "type": "ARRAY"
         }
+    },
+    "output": {
+        "pretty": "Number of impacted nodes",
+        "wdn_type": "LINK",
+        "file_name": "links.json",
+        "property_name": "number_of_impacted_nodes"
     }
 }
 
