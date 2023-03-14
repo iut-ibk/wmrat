@@ -275,24 +275,24 @@ def explore(request, network_id):
 @login_required
 def new(request):
     # get all supported analyses
-    param_jsons = list(glob.glob(str(settings.WMRAT_ANALYSIS_TOOLKIT_DIR) + '/*/param.json'))
-    if len(param_jsons) == 0:
+    spec_jsons = list(glob.glob(str(settings.WMRAT_ANALYSIS_TOOLKIT_DIR) + '/*/spec.json'))
+    if len(spec_jsons) == 0:
         return HttpResponseServerError('no supported analyses found')
 
-    print(f'{len(param_jsons)} analyses found', file=sys.stderr)
+    print(f'{len(spec_jsons)} analyses found', file=sys.stderr)
 
     # make information dictionary about these
     analyses_info_dict = {}
-    for param_json_path in param_jsons:
-        key = os.path.basename(Path(param_json_path).parent)
+    for spec_json_path in spec_jsons:
+        key = os.path.basename(Path(spec_json_path).parent)
 
         try:
-            with open(param_json_path) as f:
+            with open(spec_json_path) as f:
                 analysis_info = json.load(f)
         except Exception as e:
-            return HttpResponseServerError(f'{param_json_path}: parse error')
+            return HttpResponseServerError(f'{spec_json_path}: parse error')
 
-        ex_path = Path(param_json_path).parent / 'ex1.json'
+        ex_path = Path(spec_json_path).parent / 'ex1.json'
         try:
             with open(ex_path) as f:
                 ex_info = json.load(f)
