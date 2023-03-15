@@ -29,7 +29,7 @@ def run(epanet_inp_path, param_dict, output_dir):
     pipes = wn.query_link_attribute("diameter", np.greater_equal, param_dict['min_diameter'], link_type=wntr.network.model.Pipe)
     pipes = list(pipes.index)
     wntr.graphics.plot_network(wn, link_attribute=pipes, title='Pipes included in criticality analysis')
-    plt.show()
+    #plt.show()
     
     # Define pressure threshold
     pressure_threshold = param_dict['pressure_threshold'] # usually same as pt_abnormal
@@ -92,7 +92,7 @@ def run(epanet_inp_path, param_dict, output_dir):
     N1 = [0.5 if x==0 else x for x in N1]
     
     wntr.graphics.plot_network(wn, link_attribute=demand_impacted, node_size=0, link_width=N1, title="Not delivered demand\nfor each pipe closure")
-    plt.show()
+    #plt.show()
     
     # Create pipe ranking and getting the 5 most critical pipes 
     M_failure = dict(zip(demand_impacted.keys(), rankdata([-i for i in demand_impacted.values()], method='min')))

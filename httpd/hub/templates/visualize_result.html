@@ -7,17 +7,31 @@
     <div class="content">
 
         <div class="row" style="margin-top: 32px;">
-            <!-- map -->
-            <div class="col-sm-12">
-                <!-- XXX: hacky hardocded -->
-                <div id="map_id" style="height: 950px; width=100%; border-radius: 8px;"></div>
 
+            <div class="col-md-3">
+                <label for="analysis_name" class="form-label">Analysis name</label>
+                <input type="text" class="form-control" id="analysis_name" name="analysis_name" value="{{ analysis_name }}" disabled>
+            </div>
+
+            <div class="col-md-6">
+                <label for="network_id" class="form-label">Network</label>
+                <input type="text" class="form-control" id="network" name="network" value="{{ network.name }}" disabled>
+            </div>
+
+            <div class="col-md-3">
+                <label for="network_id" class="form-label">Analysis type</label>
+                <input type="text" class="form-control" id="network" name="network" value="{{ analysis_type }}" disabled>
             </div>
 
         </div>
 
         <div class="row" style="margin-top: 32px;">
             <!-- map -->
+            <div class="col-sm-12">
+                <!-- XXX: hacky hardocded -->
+                <div id="map_id" style="height: 950px; width=100%; border-radius: 8px;"></div>
+
+            </div>
         </div>
 
     </div>

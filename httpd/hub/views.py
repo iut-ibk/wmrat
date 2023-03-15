@@ -94,6 +94,9 @@ def epanet_archive(request):
 def visualize_result(request, analysis_id):
     analysis = get_object_or_404(Analysis, id=analysis_id)
 
+    analysis_name = analysis.name
+    analysis_type = analysis.analysis_type
+
     network = analysis.wm_network
 
     network_path = settings.WMRAT_NETWORK_DIR / str(network.id)
@@ -151,6 +154,8 @@ def visualize_result(request, analysis_id):
         'page_title': 'Result', #TODO: better name
         'graph': geojson_links,
         'color_ramp': color_ramp,
+        'analysis_name': analysis_name,
+        'analysis_type': analysis_type,
         'network': network, #XXX?
     }
 
