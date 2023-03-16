@@ -93,15 +93,31 @@
         },
     });
 
+    var atype = "{{ analysis_type }}";
+    console.log(atype);
+
     let links = L.geoJson(links_geojson, {
         style: function(feature) {
             //return {color: color_ramp_dict[d] || '#000000'}
-            return {color: getColor(feature.properties.junctions_impacted.length)}
+            //XXX: hacky
+
+            if (atype === 'single_pipe_failure_epanet') {
+                return {color: getColor(feature.properties.junctions_impacted.length)}
+            }
+            else {
+                return {color: getColor(feature.properties.junctions_impacted)}
+            }
             //return {color: '#000088'}
         },
         onEachFeature: function(feature, layer) {
             let content = '<p>';
-            content += '<span style="font-weight: bold;">#Junctions impacted:</span> ' + feature.properties.junctions_impacted.length
+            //XXX: hacky
+            if (atype === 'single_pipe_failure_epanet') {
+                content += '<span style="font-weight: bold;">#Junctions impacted:</span> ' + feature.properties.junctions_impacted.length;
+            }
+            else {
+                content += '<span style="font-weight: bold;">#Junctions impacted:</span> ' + feature.properties.junctions_impacted;
+            }
             content += '</p>';
             layer.bindPopup(content);
         }

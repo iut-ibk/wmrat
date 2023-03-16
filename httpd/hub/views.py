@@ -130,7 +130,12 @@ def visualize_result(request, analysis_id):
 
     #print(links)
 
-    max_affected = max(map(len,link_infos.values()))
+    #XXX: extremely hacky
+    if analysis_type == 'single_pipe_failure_epanet':
+        max_affected = max(map(len,link_infos.values()))
+    else:
+        max_affected = max(link_infos.values())
+
     print(max_affected)
 
     for link in geojson_links['features']:
