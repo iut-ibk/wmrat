@@ -87,7 +87,7 @@
             return L.circleMarker(latlng, {
                 opacity: 0.0,
                 radius: 2,
-                fillColor: '0x000000',
+                fillColor: '#000088',
                 fillOpacity: 0.5,
             });
         },
@@ -96,9 +96,15 @@
     let links = L.geoJson(links_geojson, {
         style: function(feature) {
             //return {color: color_ramp_dict[d] || '#000000'}
-            //return {color: getColor(feature.properties.nodes_affected)}
-            return {fillColor: '0x000088'}
+            return {color: getColor(feature.properties.junctions_impacted.length)}
+            //return {color: '#000088'}
         },
+        onEachFeature: function(feature, layer) {
+            let content = '<p>';
+            content += '<span style="font-weight: bold;">#Junctions impacted:</span> ' + feature.properties.junctions_impacted.length
+            content += '</p>';
+            layer.bindPopup(content);
+        }
     });
 
     let i = 0;
@@ -132,7 +138,7 @@
                 layer.setStyle({
                     opacity: 0.0,
                     radius: 2,
-                    fillColor: '0x000000',
+                    fillColor: '#000088',
                     fillOpacity: 0.5,
                 });
             }
