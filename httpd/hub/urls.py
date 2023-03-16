@@ -17,6 +17,9 @@ urlpatterns = [
     # explore network
     path('network/<int:network_id>/explore', views.explore, name='explore'),
 
+    # export network (GIS files)
+    path('network/<int:network_id>/export_gis', views.export_gis, name='export_gis'),
+
     # analysis archive
     path('archive', views.archive, name='archive'),
 
@@ -27,7 +30,7 @@ urlpatterns = [
     path('new', views.new, name='new'),
 
     # download analysis
-    path('analysis/<int:analysis_id>/download', views.download, name='download'),
+    path('analysis/<int:analysis_id>/download', views.download_analysis, name='download_analysis'),
 
     # delete analysis
     path('analysis/<int:analysis_id>/delete', views.delete, name='delete'),

@@ -241,6 +241,7 @@ def import_network(request):
             #TODO: parse it (so we try to don't import incorrect files)
             epanet_model_name = request.POST.get('epanet_model_name') #TODO: do we need it the 'forms.py'?
 
+            #TODO: maybe add/save later to DB (first errors and look for errors)
             network = WMNetwork(
                 name=epanet_model_name,
                 #epanet_data='empty',
@@ -292,6 +293,9 @@ def import_network(request):
 
             #TODO: for debugging ...
             print('EPANET input file written', file=sys.stderr)
+
+            zip_network_gis(network)
+
             return HttpResponseRedirect(reverse('epanet_archive', args=()))
 
         #TODO: ... and here?
@@ -368,6 +372,8 @@ def new(request):
                 vals = submitted_dict[param_key].split(',')
                 if len(vals) == 0:
                     return HttpResponseBadRequest(f'{param_key} must be a list of strings')
+
+                vals = list(map(lambda x: x.strip(), vals))
 
                 arg_dict[param_key] = vals
 
@@ -476,13 +482,38 @@ def zip_analysis(analysis):
     new_results_name = f'{analysis.id}_{analysis.name}'.replace(' ', '_')
     zip_name = f'{new_results_name}.zip'
 
+    #XXX: hacky
     os.rename(analysis_path / 'results', analysis_path / new_results_name)
 
     p = sp.Popen(['zip', '-r', zip_name, new_results_name], stdout=sp.PIPE, stderr=sp.PIPE, cwd=analysis_path)
     out, err = p.communicate()
 
+def zip_network_gis(network):
+    network_path = settings.WMRAT_NETWORK_DIR / str(network.id)
+
+    zip_name = f'{network.id}_gis.zip'
+
+    args = ['zip', '-r', zip_name, 'gis']
+    p = sp.Popen(args, stdout=sp.PIPE, stderr=sp.PIPE, cwd=network_path)
+    out, err = p.communicate()
+
 @login_required
-def download(request, analysis_id):
+def export_gis(request, network_id):
+    network = get_object_or_404(WMNetwork, id=network_id)
+
+    network_path = settings.WMRAT_NETWORK_DIR / str(network.id)
+
+    name = f'{network.id}_gis.zip'
+    path = network_path / name
+
+    content_type = 'application/zip'
+
+    resp = HttpResponse(open(path, 'rb'), content_type=content_type)
+    resp['Content-Disposition'] = 'attachment; filename={}'.format(name)
+    return resp
+
+@login_required
+def download_analysis(request, analysis_id):
     analysis = get_object_or_404(Analysis, id=analysis_id)
 
     analysis_path = settings.WMRAT_ANALYSIS_DIR / str(analysis.id)
