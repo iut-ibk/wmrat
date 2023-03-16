@@ -292,44 +292,46 @@ def epanet_to_graph(epanet_dict):
                 edges[name]['param']['status'] = pipe_params[7] # OPEN, CLOSED or CV
     
         # edges: pumps
-        for pump_params in epanet_dict['PUMPS']:
-            name, node1, node2 = pump_params[:3]
+        if 'PUMPS' in epanet_dict:
+            for pump_params in epanet_dict['PUMPS']:
+                name, node1, node2 = pump_params[:3]
     
-            edges[name] = {
-                'type': 'PUMP',
-                'coords': [],
-                'node1': node1,
-                'node2': node2,
-                'param': {},
-            }
+                edges[name] = {
+                    'type': 'PUMP',
+                    'coords': [],
+                    'node1': node1,
+                    'node2': node2,
+                    'param': {},
+                }
     
-            for i in range(3, len(pump_params), 2):
-                key = pump_params[i]
-                val = pump_params[i + 1]
+                for i in range(3, len(pump_params), 2):
+                    key = pump_params[i]
+                    val = pump_params[i + 1]
     
-                edges[name]['param'][key] = val
+                    edges[name]['param'][key] = val
     
         # edges: valves
-        for valve_params in epanet_dict['VALVES']:
-            name, node1, node2 = valve_params[:3]
+        if 'VALVES' in epanet_dict:
+            for valve_params in epanet_dict['VALVES']:
+                name, node1, node2 = valve_params[:3]
     
-            diameter = float(valve_params[3])
-            valve_type = valve_params[4]
-            valve_setting = valve_params[5]
-            minor_loss = float(valve_params[6])
+                diameter = float(valve_params[3])
+                valve_type = valve_params[4]
+                valve_setting = valve_params[5]
+                minor_loss = float(valve_params[6])
     
-            edges[name] = {
-                'type': 'VALVE',
-                'coords': [],
-                'node1': node1,
-                'node2': node2,
-                'param': {
-                    'diameter': diameter,
-                    'type': valve_type,
-                    'setting': valve_setting,
-                    'minor_loss': minor_loss,
-                },
-            }
+                edges[name] = {
+                    'type': 'VALVE',
+                    'coords': [],
+                    'node1': node1,
+                    'node2': node2,
+                    'param': {
+                        'diameter': diameter,
+                        'type': valve_type,
+                        'setting': valve_setting,
+                        'minor_loss': minor_loss,
+                    },
+                }
     
         #NOTE: useful for debugging
         #print('nodes')

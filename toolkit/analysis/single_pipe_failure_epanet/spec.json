@@ -24,9 +24,9 @@
     },
     "output": {
         "wdn_type": "LINK",
-        "file_name": "links.json",
-        "pretty": "Number of impacted nodes",
-        "property_name": "number_of_impacted_nodes"
+        "file_name": "junctions_impacted.json",
+        "pretty": "Junctions impacted by pipe failure",
+        "property_name": "junctions_impacted"
     }
 }
 

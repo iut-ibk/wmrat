@@ -10,7 +10,7 @@ import time
 
 def run(epanet_inp_path, param_dict, output_dir):
     start_time = time.time()
-    
+
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     
@@ -28,7 +28,7 @@ def run(epanet_inp_path, param_dict, output_dir):
     # Create a list of pipes with defined diameter to include in the analysis
     pipes = wn.query_link_attribute("diameter", np.greater_equal, param_dict['min_diameter'], link_type=wntr.network.model.Pipe)
     pipes = list(pipes.index)
-    wntr.graphics.plot_network(wn, link_attribute=pipes, title='Pipes included in criticality analysis')
+    #wntr.graphics.plot_network(wn, link_attribute=pipes, title='Pipes included in criticality analysis')
     #plt.show()
     
     # Define pressure threshold
@@ -91,7 +91,7 @@ def run(epanet_inp_path, param_dict, output_dir):
     N1 = [x / int_ for x in N1]
     N1 = [0.5 if x==0 else x for x in N1]
     
-    wntr.graphics.plot_network(wn, link_attribute=demand_impacted, node_size=0, link_width=N1, title="Not delivered demand\nfor each pipe closure")
+    #wntr.graphics.plot_network(wn, link_attribute=demand_impacted, node_size=0, link_width=N1, title="Not delivered demand\nfor each pipe closure")
     #plt.show()
     
     # Create pipe ranking and getting the 5 most critical pipes 
@@ -100,13 +100,21 @@ def run(epanet_inp_path, param_dict, output_dir):
     #print('The Most Critcal Pipes are:', Most_critical_pipes)
     
     # rewrite values to int()
-    M_failure_int = {}
-    for key, val in M_failure.items():
-        M_failure_int[key] = int(val)
+    #M_failure_int = {}
+    #for key, val in M_failure.items():
+    #    M_failure_int[key] = int(val)
 
-    demand_impacted_path = output_dir + '/links.json'
-    with open(demand_impacted_path, 'w') as f:
-        f.write(json.dumps(M_failure_int))
+    #demand_impacted_path = output_dir + '/links.json'
+    #with open(demand_impacted_path, 'w') as f:
+    #    f.write(json.dumps(M_failure_int))
+
+    junctions_impacted_lists = {}
+    for key, val in junctions_impacted.items():
+        junctions_impacted_lists[key] = list(val)
+
+    junctions_impacted_path = output_dir + '/junctions_impacted.json'
+    with open(junctions_impacted_path, 'w') as f:
+        f.write(json.dumps(junctions_impacted_lists))
 
     demand_impacted_output = pd.DataFrame.from_dict(demand_impacted, orient="index")
     demand_impacted_output.to_csv("demand_impacted.csv", sep=';')

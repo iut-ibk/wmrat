@@ -47,8 +47,8 @@
     var url = 'https://{s}.wien.gv.at/basemap/bmaporthofoto30cm/normal/google3857/{z}/{y}/{x}.jpeg',
         attrib = 'Datenquelle: <a href="https://basemap.at">basemap.at</a>',
         tilelayer = L.tileLayer(url, { maxZoom: 22, attribution: attrib, subdomains: ['maps1', 'maps2', 'maps3', 'maps4']}),
-        map = new L.Map('map_id', { center: defaultLatLng, zoom: 14 });
 
+    map = new L.Map('map_id', { center: defaultLatLng, zoom: 14 });
     drawnItems = L.featureGroup().addTo(map);
 
     tilelayer.addTo(map);
@@ -76,38 +76,73 @@
         */
     }
 
-    var graph = {{ graph|safe }};
+    var links_geojson = {{ links_geojson|safe }};
+    var nodes_geojson = {{ nodes_geojson|safe }};
 
-    let links = L.geoJson(graph, {
-        style: function(feature) {
-            //return {color: color_ramp_dict[d] || '#000000'}
-            return {color: getColor(feature.properties.nodes_affected)}
-        }
+    console.log(links_geojson)
+
+    let nodes = L.geoJson(nodes_geojson, {
+        pointToLayer: function (feature, latlng) {
+            let node_type = feature.properties.type;
+            return L.circleMarker(latlng, {
+                opacity: 0.0,
+                radius: 2,
+                fillColor: '0x000000',
+                fillOpacity: 0.5,
+            });
+        },
     });
 
-    /*
-    var legend = L.control({position: 'bottomright'});
+    let links = L.geoJson(links_geojson, {
+        style: function(feature) {
+            //return {color: color_ramp_dict[d] || '#000000'}
+            //return {color: getColor(feature.properties.nodes_affected)}
+            return {fillColor: '0x000088'}
+        },
+    });
 
-    legend.onAdd = function (map) {
-    
-        var div = L.DomUtil.create('div', 'info legend'),
-            grades = [0, 10, 20, 50, 100, 200, 500, 1000],
-            labels = [];
-    
-        // loop through our density intervals and generate a label with a colored square for each interval
-        for (var i = 0; i < grades.length; i++) {
-            div.innerHTML +=
-                '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
-                grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
-        }
-    
-        return div;
-    };
-    
-    legend.addTo(map);
-    */
+    let i = 0;
+    links.eachLayer(function(){ i += 1; });
+    console.log('Map has', i, 'layers.');
+
+    links.on('click', function(e) {
+        //console.log(e);
+
+        var properties = e.layer.feature.properties;
+        console.log(properties);
+
+        // get the point ids associated with the line
+        var pointIds = properties.junctions_impacted;
+        console.log(pointIds)
+
+        var n = 0;
+
+        // iterate over the point layer and change the color of the associated points
+        nodes.eachLayer(function (layer) {
+            if (pointIds.includes(layer.feature.properties.id)) {
+                layer.setStyle({
+                    opacity: 0.0,
+                    radius: 5,
+                    fillColor: 'red',
+                    fillOpacity: 1.0,
+                });
+                n += 1;
+            }
+            else {
+                layer.setStyle({
+                    opacity: 0.0,
+                    radius: 2,
+                    fillColor: '0x000000',
+                    fillOpacity: 0.5,
+                });
+            }
+        });
+
+        console.log(n);
+    });
 
     drawnItems.addLayer(links);
+    drawnItems.addLayer(nodes);
 
     map.fitBounds(drawnItems.getBounds());
 

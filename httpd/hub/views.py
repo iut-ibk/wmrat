@@ -104,6 +104,9 @@ def visualize_result(request, analysis_id):
     with open(network_path / 'gis' / 'links.geojson') as f:
         geojson_links = json.load(f)
 
+    with open(network_path / 'gis' / 'nodes.geojson') as f:
+        geojson_nodes = json.load(f)
+
     #TODO: hacky ... (we do that 2x)
     analysis_path = settings.WMRAT_ANALYSIS_DIR / str(analysis.id)
     new_results_name = f'{analysis.id}_{analysis.name}'.replace(' ', '_')
@@ -123,21 +126,22 @@ def visualize_result(request, analysis_id):
 
     #XXX: currently we only support to append to links
     with open(json_path) as f:
-        links = json.load(f)
+        link_infos = json.load(f)
 
     #print(links)
 
-    max_affected = max(links.values())
+    max_affected = max(map(len,link_infos.values()))
     print(max_affected)
 
     for link in geojson_links['features']:
         link_name = link['properties']['id']
-        if link_name in links:
-            val = links[link_name]
+        if link_name in link_infos:
+            val = link_infos[link_name]
         else:
-            val = 0 #XXX: not really correct, but fow now ...
+            val = [] #XXX: not really correct, but fow now ...
 
         link['properties'][property_name] = val
+        print(property_name)
 
     n_ranges = 25
     ranges = []
@@ -152,7 +156,8 @@ def visualize_result(request, analysis_id):
 
     context = {
         'page_title': 'Result', #TODO: better name
-        'graph': geojson_links,
+        'links_geojson': geojson_links,
+        'nodes_geojson': geojson_nodes,
         'color_ramp': color_ramp,
         'analysis_name': analysis_name,
         'analysis_type': analysis_type,

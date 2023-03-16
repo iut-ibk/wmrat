@@ -115,6 +115,23 @@
                 color: colors[link_type], // || '#000000'
                 weight: 5,
             }
+        },
+        onEachFeature: function(feature, layer) {
+            let content = '<table>';
+            Object.keys(feature.properties).forEach(function(key) {
+                if (typeof feature.properties[key] === 'object') {
+                    // handle nested object
+                    content += '<tr><td colspan="2"><b>' + key + ':</b></td></tr>';
+                    Object.keys(feature.properties[key]).forEach(function(subkey) {
+                        content += '<tr><td>' + subkey + ':</td><td>' + feature.properties[key][subkey] + '</td></tr>';
+                    });
+                } else {
+                    // handle regular property
+                    content += '<tr><td>' + key + ':</td><td>' + feature.properties[key] + '</td></tr>';
+                }
+            });
+            content += '</table>';
+            layer.bindPopup(content);
         }
     });
 
@@ -135,6 +152,23 @@
 
                 radius: 3
             });
+        },
+        onEachFeature: function(feature, layer) {
+            let content = '<table>';
+            Object.keys(feature.properties).forEach(function(key) {
+                if (typeof feature.properties[key] === 'object') {
+                    // handle nested object
+                    content += '<tr><td colspan="2"><b>' + key + ':</b></td></tr>';
+                    Object.keys(feature.properties[key]).forEach(function(subkey) {
+                        content += '<tr><td>' + subkey + ':</td><td>' + feature.properties[key][subkey] + '</td></tr>';
+                    });
+                } else {
+                    // handle regular property
+                    content += '<tr><td>' + key + ':</td><td>' + feature.properties[key] + '</td></tr>';
+                }
+            });
+            content += '</table>';
+            layer.bindPopup(content);
         }
     });
 
