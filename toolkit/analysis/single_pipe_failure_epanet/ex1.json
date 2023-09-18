@@ -1,5 +1,5 @@
 {
-    "duration": 259200,
+    "duration": 21600,
     "required_pressure": 35.00,
     "min_diameter": 0.001,
     "pressure_threshold": 11,

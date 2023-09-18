@@ -88,16 +88,38 @@
 </main>
 
 <script>
-    var defaultLatLng = new L.LatLng(47.263, 11.404)
+    let defaultLatLng = new L.LatLng(47.263, 11.404);
 
-    var url = 'https://{s}.wien.gv.at/basemap/bmaporthofoto30cm/normal/google3857/{z}/{y}/{x}.jpeg',
-        attrib = 'Datenquelle: <a href="https://basemap.at">basemap.at</a>',
-        tilelayer = L.tileLayer(url, { maxZoom: 22, attribution: attrib, subdomains: ['maps1', 'maps2', 'maps3', 'maps4']}),
-        map = new L.Map('map_id', { center: defaultLatLng, zoom: 14 });
+    let attrib = 'Datenquelle: <a href="https://basemap.at">basemap.at</a>';
+
+    var url_standard = 'https://{s}.wien.gv.at/basemap/geolandbasemap/normal/google3857/{z}/{y}/{x}.png';
+    var tilelayer_standard = L.tileLayer(url_standard, { maxZoom: 22, attribution: attrib, subdomains: ['maps1', 'maps2', 'maps3', 'maps4']});
+
+    var url_grau = 'https://{s}.wien.gv.at/basemap/bmapgrau/normal/google3857/{z}/{y}/{x}.png';
+    var tilelayer_grau = L.tileLayer(url_grau, { maxZoom: 22, attribution: attrib, subdomains: ['maps1', 'maps2', 'maps3', 'maps4']});
+
+    var url_orthofoto = 'https://{s}.wien.gv.at/basemap/bmaporthofoto30cm/normal/google3857/{z}/{y}/{x}.jpeg';
+    var tilelayer_orthofoto = L.tileLayer(url_orthofoto, { maxZoom: 22, attribution: attrib, subdomains: ['maps1', 'maps2', 'maps3', 'maps4']});
+
+    var url_gelaende = 'https://{s}.wien.gv.at/basemap/bmapgelaende/grau/google3857/{z}/{y}/{x}.jpeg';
+    var tilelayer_gelaende = L.tileLayer(url_gelaende, { maxZoom: 22, attribution: attrib, subdomains: ['maps1', 'maps2', 'maps3', 'maps4']});
+
+    var url_oberflaeche = 'https://{s}.wien.gv.at/basemap/bmapoberflaeche/grau/google3857/{z}/{y}/{x}.jpeg';
+    var tilelayer_oberflaeche = L.tileLayer(url_oberflaeche, { maxZoom: 22, attribution: attrib, subdomains: ['maps1', 'maps2', 'maps3', 'maps4']});
+
+    var map = new L.Map('map_id', { center: defaultLatLng, zoom: 14, layers: [tilelayer_gelaende, tilelayer_standard, tilelayer_orthofoto, tilelayer_grau, tilelayer_oberflaeche]});
 
     drawnItems = L.featureGroup().addTo(map);
 
-    tilelayer.addTo(map);
+    const baseLayers = {
+        'Gelaende': tilelayer_gelaende,
+        'Oberflaeche': tilelayer_oberflaeche,
+        'Orthofoto': tilelayer_orthofoto,
+        'Standard': tilelayer_standard,
+        'Grau': tilelayer_grau,
+    };
+
+    const layerControl = L.control.layers(baseLayers).addTo(map);
 
     let colors = {{ colors|safe }};
 
@@ -109,7 +131,7 @@
             let link_type = feature.properties.type;
             return {
                 color: colors[link_type], // || '#000000'
-                weight: 5,
+                weight: 2,
             }
         },
         onEachFeature: function(feature, layer) {
