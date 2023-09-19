@@ -8,20 +8,9 @@
 
         <div class="row" style="margin-top: 32px;">
 
-            <div class="col-md-3">
-                <label for="analysis_name" class="form-label">Analysis name</label>
-                <input type="text" class="form-control" id="analysis_name" name="analysis_name" value="{{ analysis_name }}" disabled>
-            </div>
-
-            <div class="col-md-6">
-                <label for="network_id" class="form-label">Network</label>
-                <input type="text" class="form-control" id="network" name="network" value="{{ network.name }}" disabled>
-            </div>
-
-            <div class="col-md-3">
-                <label for="network_id" class="form-label">Analysis type</label>
-                <input type="text" class="form-control" id="network" name="network" value="{{ analysis_type }}" disabled>
-            </div>
+            <h1 style="text-align: center;">{{ analysis_name }}</h1>
+            <h3 style="text-align: center; color: #888888">{{ network.name }}</h3>
+            <!-- <h5 style="color: #888888">{{ pretty_analysis_type }}</h5> -->
 
         </div>
 
@@ -31,17 +20,68 @@
                 <!-- XXX: hacky hardocded -->
                 <div id="map_id" style="height: 800px; width=100%; border-radius: 8px;"></div>
 
+                <p id="info_text" style="margin-top: 8px; text-align: center; font-weight: bold;">Click on a pipe to see affected nodes.</p>
+
             </div>
+
+            <p style="text-align: center;"><a href="download"><button class="btn btn-warning btn-sm"><i class="fas fa-download"></i> download</button></a> or <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#exampleModal"><i class="fas fa-palette"></i> change style</button></p>
         </div>
 
     </div>
 
-<style>
-.legend { text-align: left; line-height: 18px; color: #555; } .legend i { width: 18px; height: 18px; float: left; margin-right: 8px; opacity: 0.7; }</style>
-</style>
+    <!-- Modal -->
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">Modal title</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    ...
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </main>
 
 <script>
+    function make_color_ramp(color1, color2, nparts) {
+        const [r0, g0, b0] = [0, 2, 4].map(i => parseInt(color1.slice(i, i + 2), 16));
+        const [r1, g1, b1] = [0, 2, 4].map(i => parseInt(color2.slice(i, i + 2), 16));
+
+        const r_step = (r1 - r0) / (nparts - 1);
+        const g_step = (g1 - g0) / (nparts - 1);
+        const b_step = (b1 - b0) / (nparts - 1);
+
+        const colors = [];
+
+        for (let i = 0; i < nparts; i++) {
+            const r = Math.round(r0 + i * r_step);
+            const g = Math.round(g0 + i * g_step);
+            const b = Math.round(b0 + i * b_step);
+
+            const hexString = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+
+            colors.push(hexString);
+        }
+
+        return colors;
+    }
+
+    function getColor(colors, number_map, n) {
+        const nparts = colors.length;
+        const idx = number_map[n];
+        const factor = nparts / Object.keys(number_map).length;
+        color = colors[Math.floor(idx * factor)];
+        return color;
+    }
+
     var defaultLatLng = new L.LatLng(47.263, 11.404)
 
     var url = 'https://{s}.wien.gv.at/basemap/bmaporthofoto30cm/normal/google3857/{z}/{y}/{x}.jpeg',
@@ -53,33 +93,27 @@
 
     tilelayer.addTo(map);
 
-    let color_ramp = {{ color_ramp|safe }};
-    console.log(color_ramp);
-
-    function getColor(d) {
-        for (let i=color_ramp.length-1; i>=0; i--) {
-            if (d >= color_ramp[i][0]) {
-                return color_ramp[i][1];
-            }
-        }
-
-        return color_ramp[0][1];
-        /*
-        return d > 1000 ? '#800026' :
-               d > 500  ? '#BD0026' :
-               d > 200  ? '#E31A1C' :
-               d > 100  ? '#FC4E2A' :
-               d > 50   ? '#FD8D3C' :
-               d > 20   ? '#FEB24C' :
-               d > 10   ? '#FED976' :
-                          '#FFEDA0';
-        */
-    }
+    let color_list = make_color_ramp('00ff00', 'ff0000', 50);
+    console.log(color_list);
 
     var links_geojson = {{ links_geojson|safe }};
     var nodes_geojson = {{ nodes_geojson|safe }};
 
-    console.log(links_geojson)
+    const junctionsImpactedArray = [];
+
+    for (const feature of links_geojson.features) {
+      if (feature.properties && feature.properties.junctions_impacted) {
+        junctionsImpactedArray.push(feature.properties.junctions_impacted.length);
+      }
+    }
+
+    const junctionsImpactedArrayUnique = [...new Set(junctionsImpactedArray)].sort((a, b) => a - b);
+
+    var numberMap = {};
+
+    for (let i = 0; i < junctionsImpactedArrayUnique.length; i++) {
+        numberMap[junctionsImpactedArrayUnique[i]] = i;
+    }
 
     let nodes = L.geoJson(nodes_geojson, {
         pointToLayer: function (feature, latlng) {
@@ -98,29 +132,8 @@
 
     let links = L.geoJson(links_geojson, {
         style: function(feature) {
-            //return {color: color_ramp_dict[d] || '#000000'}
-            //XXX: hacky
-
-            if (atype === 'single_pipe_failure_epanet') {
-                return {color: getColor(feature.properties.junctions_impacted.length)}
-            }
-            else {
-                return {color: getColor(feature.properties.junctions_impacted)}
-            }
-            //return {color: '#000088'}
+            return {color: getColor(color_list, numberMap, feature.properties.junctions_impacted.length), weight: 2}
         },
-        onEachFeature: function(feature, layer) {
-            let content = '<p>';
-            //XXX: hacky
-            if (atype === 'single_pipe_failure_epanet') {
-                content += '<span style="font-weight: bold;">#Junctions impacted:</span> ' + feature.properties.junctions_impacted.length;
-            }
-            else {
-                content += '<span style="font-weight: bold;">#Junctions impacted:</span> ' + feature.properties.junctions_impacted;
-            }
-            content += '</p>';
-            layer.bindPopup(content);
-        }
     });
 
     let i = 0;
@@ -138,6 +151,9 @@
         console.log(pointIds)
 
         var n = 0;
+
+        const infoTextElement = document.getElementById("info_text");
+        infoTextElement.textContent = 'Failure of pipe ' + properties.id + ' impacts ' + properties.junctions_impacted.length + ' node(s).'
 
         // iterate over the point layer and change the color of the associated points
         nodes.eachLayer(function (layer) {

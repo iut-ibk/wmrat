@@ -117,10 +117,15 @@ def visualize_result(request, analysis_id):
         return HttpResponseServerError(err_str)
 
     analyses_info_all = val
+
+    #print(analyses_info_all)
+
     analyses_info = analyses_info_all[analysis.analysis_type]
 
     file_name = analyses_info['output']['file_name']
     property_name = analyses_info['output']['property_name']
+
+    pretty_analysis_type = analyses_info['pretty']
 
     json_path = analysis_path / new_results_name / file_name
 
@@ -148,24 +153,14 @@ def visualize_result(request, analysis_id):
         link['properties'][property_name] = val
         print(property_name)
 
-    n_ranges = 25
-    ranges = []
-
-    range_width = max_affected / n_ranges
-
-    for i in range(n_ranges):
-        ranges.append((i + 1) * range_width)
-
-    color_ramp = make_red_green_color_ramp_dict(ranges)
-    print(color_ramp)
-
     context = {
         'page_title': 'Result', #TODO: better name
         'links_geojson': geojson_links,
+        'analysis': analysis,
         'nodes_geojson': geojson_nodes,
-        'color_ramp': color_ramp,
         'analysis_name': analysis_name,
         'analysis_type': analysis_type,
+        'pretty_analysis_type': pretty_analysis_type,
         'network': network, #XXX?
     }
 
@@ -211,30 +206,6 @@ def get_analyses_info_dict_with_defaults():
 
     #print(analyses_info_dict)
     return True, analyses_info_dict
-
-def make_red_green_color_ramp_dict(parts):
-    n = len(parts)
-
-    green_vals = np.linspace(0, 255, n, dtype=np.uint8)
-
-    colors = []
-    for i, green in enumerate(green_vals):
-        color = green_vals[n - i - 1], green, 0
-        hex_color = '#%02x%02x%02x' % color
-
-        colors.append(hex_color)
-
-    #NOTE: XXX: old; most common (smalltest) diameters gets black color
-    #colors[-1] = '#000000'
-
-    colors_reversed = list(reversed(colors))
-
-    x = []
-    for i in range(n):
-        x.append([parts[i], colors_reversed[i]])
-
-    #return list(zip(parts, reversed(colors)))
-    return x
 
 @login_required
 def import_network(request):
