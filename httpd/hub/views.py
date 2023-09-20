@@ -127,6 +127,8 @@ def visualize_result(request, analysis_id):
 
     pretty_analysis_type = analyses_info['pretty']
 
+    pretty_output_name = analyses_info['output']['pretty']
+
     json_path = analysis_path / new_results_name / file_name
 
     #XXX: currently we only support to append to links
@@ -141,8 +143,6 @@ def visualize_result(request, analysis_id):
     else:
         max_affected = max(link_infos.values())
 
-    print(max_affected)
-
     for link in geojson_links['features']:
         link_name = link['properties']['id']
         if link_name in link_infos:
@@ -151,17 +151,29 @@ def visualize_result(request, analysis_id):
             val = [] #XXX: not really correct, but fow now ...
 
         link['properties'][property_name] = val
-        print(property_name)
+
+    plot_data = []
+    for k, v in link_infos.items():
+        data_point = {
+            'label': k,
+            'value': len(v),
+        }
+        plot_data.append(data_point)
+
+    plot_data = sorted(plot_data, key=lambda entry: entry['value'], reverse=True)[:10]
+
+    #print(plot_data)
 
     context = {
+        'default_color_ramp': ('#ff0000', '#00ff00'),
         'page_title': 'Result', #TODO: better name
         'links_geojson': geojson_links,
-        'analysis': analysis,
         'nodes_geojson': geojson_nodes,
-        'analysis_name': analysis_name,
-        'analysis_type': analysis_type,
+        'analysis': analysis,
         'pretty_analysis_type': pretty_analysis_type,
         'network': network, #XXX?
+        'plot_data': plot_data,
+        'pretty_output_name': pretty_output_name,
     }
 
     return render(request, 'visualize_result.html', context)
