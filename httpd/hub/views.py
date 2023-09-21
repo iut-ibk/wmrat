@@ -137,30 +137,28 @@ def visualize_result(request, analysis_id):
 
     #print(links)
 
-    #XXX: extremely hacky
-    if analysis_type == 'single_pipe_failure_epanet':
-        max_affected = max(map(len,link_infos.values()))
-    else:
-        max_affected = max(link_infos.values())
-
     for link in geojson_links['features']:
         link_name = link['properties']['id']
         if link_name in link_infos:
             val = link_infos[link_name]
         else:
-            val = [] #XXX: not really correct, but fow now ...
+            #XXX: hacky
+            val = [] if analysis.analysis_type == 'single_pipe_failure_epanet' else 0 #XXX: not really correct, but fow now ...
 
         link['properties'][property_name] = val
+
+    print('len', len(link_infos))
 
     plot_data = []
     for k, v in link_infos.items():
         data_point = {
             'label': k,
-            'value': len(v),
+            #XXX
+            'value': len(v) if analysis.analysis_type == 'single_pipe_failure_epanet' else v,
         }
         plot_data.append(data_point)
 
-    plot_data = sorted(plot_data, key=lambda entry: entry['value'], reverse=True)[:10]
+    plot_data = sorted(plot_data, key=lambda entry: entry['value'], reverse=True)[:25]
 
     #print(plot_data)
 

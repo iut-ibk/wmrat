@@ -92,7 +92,12 @@
 
         console.log(colorA, colorB);
         links.eachLayer(function(featureInstanceLayer) {
-            let n = featureInstanceLayer.feature.properties.junctions_impacted.length
+            if (atype === 'single_pipe_failure_epanet') {
+                var n = featureInstanceLayer.feature.properties.junctions_impacted.length;
+            }
+            else {
+                var n = featureInstanceLayer.feature.properties.junctions_impacted;
+            }
 
             featureInstanceLayer.setStyle({
                 color: getColor(color_list, numberMap, n),
@@ -135,6 +140,9 @@
         return color;
     }
 
+    var atype = "{{ analysis.analysis_type }}";
+    console.log(atype);
+
     var defaultLatLng = new L.LatLng(47.263, 11.404)
 
     let attrib = 'Datenquelle: <a href="https://basemap.at">basemap.at</a>';
@@ -157,9 +165,14 @@
     const junctionsImpactedArray = [];
 
     for (const feature of links_geojson.features) {
-      if (feature.properties && feature.properties.junctions_impacted) {
-        junctionsImpactedArray.push(feature.properties.junctions_impacted.length);
-      }
+        if (feature.properties && feature.properties.junctions_impacted) {
+            if (atype === 'single_pipe_failure_epanet') {
+                junctionsImpactedArray.push(feature.properties.junctions_impacted.length);
+            }
+            else {
+                junctionsImpactedArray.push(feature.properties.junctions_impacted);
+            }
+        }
     }
 
     const junctionsImpactedArrayUnique = [...new Set(junctionsImpactedArray)].sort((a, b) => a - b);
@@ -182,12 +195,14 @@
         },
     });
 
-    var atype = "{{ analysis.analysis_type }}";
-    console.log(atype);
-
     let links = L.geoJson(links_geojson, {
         style: function(feature) {
-            return {color: getColor(color_list, numberMap, feature.properties.junctions_impacted.length), weight: 2}
+            if (atype === 'single_pipe_failure_epanet') {
+                return {color: getColor(color_list, numberMap, feature.properties.junctions_impacted.length), weight: 2};
+            }
+            else {
+                return {color: getColor(color_list, numberMap, feature.properties.junctions_impacted), weight: 2};
+            }
         },
     });
 
@@ -201,33 +216,36 @@
         var pointIds = properties.junctions_impacted;
         console.log(pointIds)
 
-        var n = 0;
-
         const infoTextElement = document.getElementById("info_text");
-        infoTextElement.textContent = 'Failure of pipe ' + properties.id + ' impacts ' + properties.junctions_impacted.length + ' node(s).'
+
+        if (atype === 'single_pipe_failure_epanet') {
+            infoTextElement.textContent = 'Failure of pipe ' + properties.id + ' impacts ' + properties.junctions_impacted.length + ' node(s).'
+        }
+        else {
+            infoTextElement.textContent = 'Failure of pipe ' + properties.id + ' impacts ' + properties.junctions_impacted + ' node(s).'
+        }
 
         // iterate over the point layer and change the color of the associated points
-        nodes.eachLayer(function (layer) {
-            if (pointIds.includes(layer.feature.properties.id)) {
-                layer.setStyle({
-                    opacity: 0.0,
-                    radius: 5,
-                    fillColor: 'red',
-                    fillOpacity: 1.0,
-                });
-                n += 1;
-            }
-            else {
-                layer.setStyle({
-                    opacity: 0.0,
-                    radius: 2,
-                    fillColor: '#000088',
-                    fillOpacity: 0.5,
-                });
-            }
-        });
-
-        console.log(n);
+        if (atype === 'single_pipe_failure_epanet') {
+            nodes.eachLayer(function (layer) {
+                if (pointIds.includes(layer.feature.properties.id)) {
+                    layer.setStyle({
+                        opacity: 0.0,
+                        radius: 5,
+                        fillColor: 'red',
+                        fillOpacity: 1.0,
+                    });
+                }
+                else {
+                    layer.setStyle({
+                        opacity: 0.0,
+                        radius: 2,
+                        fillColor: '#000088',
+                        fillOpacity: 0.5,
+                    });
+                }
+            });
+        }
     });
 
     drawnItems.addLayer(links);
