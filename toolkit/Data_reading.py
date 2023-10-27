@@ -44,10 +44,12 @@ def dataview (sorted_dict_G, sorted_dict_H, combi, count_less_than_zero, length_
     # Calculate ranks
     rank_G = pd.Series([merged_dict[key][0] for key in keys]).rank(method='min', ascending=False)
     rank_H = pd.Series([merged_dict[key][1] for key in keys]).rank(method='min', ascending=False)
+    hyd_values_dict = pd.Series([merged_dict[key][1] for key in keys])
 
     # Populate ranks_G and ranks_H lists
     ranks_G = list(rank_G)
     ranks_H = list(rank_H)
+    hyd_values = list(hyd_values_dict)
 
 
 
@@ -60,7 +62,7 @@ def dataview (sorted_dict_G, sorted_dict_H, combi, count_less_than_zero, length_
 
     # Calculate Spearman's correlation coefficient
     spearman_coefficient, _ = spearmanr(rank_G, rank_H)
-    df = pd.DataFrame({'Key': keys, 'Rank G': rank_G, 'Rank H': rank_H, 'Hydraulic Failure Vaule': sorted_dict_H})
+    df = pd.DataFrame({'Key': keys, 'Rank G': rank_G, 'Rank H': rank_H, 'Hydraulic Failure Vaule': hyd_values})
     df_summary = pd.DataFrame({'Spearman Coefficient': [spearman_coefficient],'total combiantions': length_total, 'Graph_Deleted': count_less_than_zero, 'Hydraulic_Deleted': counter})
 
     # Save to Excel

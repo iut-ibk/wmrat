@@ -58,6 +58,9 @@ def Failure_EBCQ_multiple(EBCQ_normal, EBCQ_normal_R, network_graph, K, Failure_
     
     for edges in Failure_EBCQ_multiple:
 
+        if i > 1000:
+            break
+
         if i % 100000 == 0:
 
 
