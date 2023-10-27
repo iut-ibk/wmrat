@@ -91,10 +91,10 @@ def Failure_EBCQ_multiple(EBCQ_normal, EBCQ_normal_R, network_graph, K, Failure_
 
         for c in sorted(nx.connected_components(network_graph_2), key=len, reverse=True):
             network_graph_3 = network_graph_2.subgraph(c).copy()
-            if '28' in c:
+            if 'HB_Kraken' in c:
                 L1 = dict()
                 L1.update(dict.fromkeys(network_graph_3.edges(), 0.0))
-                SP_abnormal = nx.multi_source_dijkstra_path(network_graph_3, sources={'28'}, weight='Wei')
+                SP_abnormal = nx.multi_source_dijkstra_path(network_graph_3, sources={'HB_Kraken'}, weight='Wei')
                 demands = nx.get_node_attributes(network_graph_3, 'demand')
                 EBCQ_abnormal = EBCQ(SP_abnormal, L1, demands)                                                         # same as EBCQ but under abnormal conditions
 
@@ -120,7 +120,8 @@ def Failure_EBCQ_multiple(EBCQ_normal, EBCQ_normal_R, network_graph, K, Failure_
                 failure_weight += sum(v for v in C_delta_C.values() if v > 0)
             else:
 
-                reachable_nodes = nx.descendants(network_graph_2, '28') | {'28'}
+                #reachable_nodes = nx.descendants(network_graph_2, '28') | {'28'}
+                reachable_nodes = nx.descendants(network_graph_2, 'HB_Kraken') | {'HB_Kraken'}
 
                 reachable_graph = nx.subgraph(network_graph, reachable_nodes)
 
@@ -144,7 +145,7 @@ def Failure_EBCQ_multiple(EBCQ_normal, EBCQ_normal_R, network_graph, K, Failure_
             
             
 
-                    if node == '28':
+                    if node == 'HB_Kraken':
 
                          continue
 
@@ -158,7 +159,7 @@ def Failure_EBCQ_multiple(EBCQ_normal, EBCQ_normal_R, network_graph, K, Failure_
                 L1 = dict()
                 L1.update(dict.fromkeys(network_graph_3.edges(), 0.0))
 
-                source_node = '28'
+                source_node = 'HB_Kraken'
 
                 # Check if the source node exists in the graph
                 if source_node in network_graph_3.nodes():

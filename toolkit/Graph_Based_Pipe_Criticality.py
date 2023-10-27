@@ -19,13 +19,15 @@ import collections
 import pickle
 import Data_reading
 import random
+import sys
 import wntr
 import csv
 
 start_time_H = time.time()
 
 # Open a water network model, Creating graph
-inp_file = 'Jilin.inp'
+#inp_file = 'Jilin.inp'
+inp_file = sys.argv[1]
 f = open(inp_file)
 success, val = misc_light.swmm_input_read(f)
 network_graph = graph_editing.create_graph_of_epanet_file(val)
@@ -39,8 +41,10 @@ weights = nx.get_edge_attributes(network_graph, 'Wei')
 name = nx.get_edge_attributes(network_graph, 'key')
 elevation = nx.get_node_attributes(network_graph, 'elevation')
 
-if "28" in elevation:
-    node_elevation = elevation["28"]
+print(elevation)
+
+#if "28" in elevation:
+#    node_elevation = elevation["28"]
 
 #if "1" in elevation:
 #   reservoir_elevation = elevation ["1"]
@@ -61,82 +65,83 @@ friction_factors = {}
 # Extract the friction factor for each pipe and calcualtion of head differnece
 
 
-for link_name, link in wn.links.items():
-
-    start_node = wn.get_link(link_name).start_node
-    end_node = wn.get_link(link_name).end_node
-    
-    # Calculate the mid-elevation
-
-    if (start_node.name == '28'):
-    
-       mid_elevation = abs(end_node.elevation)
-
-    elif (end_node.name == '28'):
-
-        mid_elevation = abs(start_node.elevation)
-
-    #elif (end_node.name == '1'):
-
-    #    mid_elevation = abs(start_node.elevation - reservoir_elevation)
-
-    else:
-
-        mid_elevation = node_elevation - (start_node.elevation)
-
-
-
-
-    if isinstance(link, wntr.network.Pipe):
-        friction_factor = results.link['friction_factor'].loc[:, link_name].mean()
-        friction_factors[link_name] = friction_factor, mid_elevation
-
+#for link_name, link in wn.links.items():
+#
+#    start_node = wn.get_link(link_name).start_node
+#    end_node = wn.get_link(link_name).end_node
+#    
+#    # Calculate the mid-elevation
+#
+#    if (start_node.name == '28'):
+#    
+#       mid_elevation = abs(end_node.elevation)
+#
+#    elif (end_node.name == '28'):
+#
+#        mid_elevation = abs(start_node.elevation)
+#
+#    #elif (end_node.name == '1'):
+#
+#    #    mid_elevation = abs(start_node.elevation - reservoir_elevation)
+#
+#    else:
+#
+#        mid_elevation = node_elevation - (start_node.elevation)
+#
+#
+#
+#
+#    if isinstance(link, wntr.network.Pipe):
+#        friction_factor = results.link['friction_factor'].loc[:, link_name].mean()
+#        friction_factors[link_name] = friction_factor, mid_elevation
+#
     
 
 
 
 #saving friction loss and head loss
 
-
-C_max_F = {(wn.get_link(key).start_node_name, wn.get_link(key).end_node_name): items for key, items in friction_factors.items()}
-
-C_max_F_R = {keys[::-1]: value for keys, value in C_max_F.items()}
-
-
-v ={}
-
-# calculation of v 
-
-for key, value in C_max.items():
-
-    if key in C_max_F.keys():
-
-        if C_max_F[key][0] == 0:
-
-            v[key] = 3
-
-        else:
-
-            
-            v[key] = math.sqrt((2*9.81* C_max[key])/ (C_max_F[key][0]*1000*length_links[key]))
-
-    elif key in C_max_F_R.keys():
-
-        if C_max_F_R[key][0] == 0:
-
-            v[key] = 3
-
-        else:
-
-            v[key] = math.sqrt((2*9.81* C_max[key])/ (C_max_F_R[key][0]*1000*length_links[key]))
-
-
-
-
+#
+#C_max_F = {(wn.get_link(key).start_node_name, wn.get_link(key).end_node_name): items for key, items in friction_factors.items()}
+#
+#C_max_F_R = {keys[::-1]: value for keys, value in C_max_F.items()}
+#
+#
+#v ={}
+#
+## calculation of v 
+#
+#for key, value in C_max.items():
+#
+#    if key in C_max_F.keys():
+#
+#        if C_max_F[key][0] == 0:
+#
+#            v[key] = 3
+#
+#        else:
+#
+#            
+#            v[key] = math.sqrt((2*9.81* C_max[key])/ (C_max_F[key][0]*1000*length_links[key]))
+#
+#    elif key in C_max_F_R.keys():
+#
+#        if C_max_F_R[key][0] == 0:
+#
+#            v[key] = 3
+#
+#        else:
+#
+#            v[key] = math.sqrt((2*9.81* C_max[key])/ (C_max_F_R[key][0]*1000*length_links[key]))
+#
+#
+#
+#
 
 
 # C calcualtion
 
+# because EPANET uses mm^3/sec => l/s
 C_max.update((key, value * value / 4000000 * math.pi *3* 1000) for key, value in C_max.items())
 
 
@@ -150,7 +155,8 @@ K = dict((k, v) for k, v in demands.items() if float(v) >= 0)
 # Shortest path from (multiple) sources
 # Creating dict L with edges
 
-SP = nx.multi_source_dijkstra_path(network_graph, sources={'28'}, weight='Wei')  #'HB_Pirchanger', 'HB_Schmadl', 'HB_Pertrach', 
+#SP = nx.multi_source_dijkstra_path(network_graph, sources={'28'}, weight='Wei')  #'HB_Pirchanger', 'HB_Schmadl', 'HB_Pertrach', 
+SP = nx.multi_source_dijkstra_path(network_graph, sources={'HB_Kraken'}, weight='Wei')  #'HB_Pirchanger', 'HB_Schmadl', 'HB_Pertrach', 
 L = dict()
 L.update(dict.fromkeys(network_graph.edges(), 0.0))
 

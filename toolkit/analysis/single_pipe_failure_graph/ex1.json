@@ -1,7 +1,9 @@
 {
     "lambda": 0.13,
     "sources": [
-        "tank_a",
-        "tank_b"
+        "HB_Pirchanger",
+        "HB_Schmadl",
+        "HB_Pertrach",
+        "HB_Kraken"
     ]
 }

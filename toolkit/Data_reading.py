@@ -60,7 +60,7 @@ def dataview (sorted_dict_G, sorted_dict_H, combi, count_less_than_zero, length_
 
     # Calculate Spearman's correlation coefficient
     spearman_coefficient, _ = spearmanr(rank_G, rank_H)
-    df = pd.DataFrame({'Key': keys, 'Rank G': rank_G, 'Rank H': rank_H})
+    df = pd.DataFrame({'Key': keys, 'Rank G': rank_G, 'Rank H': rank_H, 'Hydraulic Failure Vaule': sorted_dict_H})
     df_summary = pd.DataFrame({'Spearman Coefficient': [spearman_coefficient],'total combiantions': length_total, 'Graph_Deleted': count_less_than_zero, 'Hydraulic_Deleted': counter})
 
     # Save to Excel

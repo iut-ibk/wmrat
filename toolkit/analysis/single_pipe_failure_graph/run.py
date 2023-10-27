@@ -23,6 +23,8 @@ import time
 def run(epanet_inp_path, param_dict, output_dir):
     start_time = time.time()
 
+    print('here')
+
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     
@@ -250,9 +252,8 @@ def run(epanet_inp_path, param_dict, output_dir):
     with open(junctions_impacted_path, 'w') as f:
         f.write(json.dumps(M_failure_int))
 
-    #demand_impacted_output = pd.DataFrame.from_dict(Failure_EBCQ, orient="index")
-    #demand_impacted_output.to_csv(demand_impacted_graph_path, sep=';')
-    
+    demand_impacted_output = pd.DataFrame.from_dict(Failure_EBCQ, orient="index")
+    demand_impacted_output.to_csv(output_dir + '/out.csv', sep=';')
     print('Duration: {}'.format(time.time()-start_time))
 
     return True
