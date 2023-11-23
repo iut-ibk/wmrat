@@ -451,11 +451,25 @@ def new(request):
                     return HttpResponseBadRequest(f'{param_key} must be a list of strings')
 
                 vals = list(map(lambda x: x.strip(), vals))
-
                 arg_dict[param_key] = vals
+            
+            elif param_val['type'] == 'STRING':
+                val = submitted_dict[param_key]
+                arg_dict[param_key] = val
 
-            #TODO: string? probably don't have to support other types ...
-        
+                if len(val) >= 64:
+                    return HttpResponseBadRequest(f'string parameter too long')
+
+            elif param_val['type'] == 'INT':
+                try:
+                    val = int(submitted_dict[param_key])
+                    arg_dict[param_key] = val
+                except ValueError as e:
+                    return HttpResponseBadRequest(f'{param_key} must be an integer')
+
+            else:
+                return HttpResponseServerError(f"unsupported type: {param_val['type']}")
+
         #print(arg_dict)
 
         analysis = Analysis(

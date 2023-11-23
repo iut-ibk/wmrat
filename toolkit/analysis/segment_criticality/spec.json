@@ -1,5 +1,5 @@
 {
-    "pretty": "Single pipe failure (EPANET)",
+    "pretty": "Segment criticality",
     "params": {
         "duration": {
             "pretty": "Duration",
