@@ -28,6 +28,8 @@ start_time_H = time.time()
 # Open a water network model, Creating graph
 #inp_file = 'Jilin.inp'
 inp_file = sys.argv[1]
+n_combs = int(sys.argv[2])
+
 f = open(inp_file)
 success, val = misc_light.swmm_input_read(f)
 network_graph = graph_editing.create_graph_of_epanet_file(val)
@@ -57,7 +59,7 @@ length_links = nx.get_edge_attributes(network_graph, 'len')
 # Solve the pressure-driven analysis
 wn = wntr.network.WaterNetworkModel(inp_file)
 sim = wntr.sim.EpanetSimulator(wn)
-results = sim.run_sim()
+results = sim.run_sim(file_prefix='multi_graph_normal_tmp')
 
 
 friction_factors = {}
@@ -201,7 +203,8 @@ combi = 2
 
 correlation = {}
 
-c = int(input("Enter the number of combinations you want: "))
+#c = int(input("Enter the number of combinations you want: "))
+c = n_combs
 
 
 

@@ -54,7 +54,8 @@ discharge_coefficient = 0.6
 negative_outflow_kraken = {}
 
 ##wntr input
-inp_file = 'Schwaz_20230529_Min.inp'
+#inp_file = 'Schwaz_20230529_Min.inp'
+inp_file = sys.argv[1]
 wn = wntr.network.WaterNetworkModel(inp_file)
 
 wn.options.hydraulic.demand_model = 'PDD'
@@ -68,7 +69,7 @@ wn.options.time.report_timestep: int = 1
 
 
 sim = wntr.sim.EpanetSimulator(wn)
-results = sim.run_sim()
+results = sim.run_sim(file_prefix='pipeburst_normal_tmp')
 flow_normal = results.link['flowrate']
 
 
@@ -179,7 +180,7 @@ for pipe_id in pipe_ids:
         wn.options.time.hydraulic_timestep: int = 1
         wn.options.time.report_timestep: int = 1
         sim_L = wntr.sim.EpanetSimulator(wn)
-        results_L = sim_L.run_sim()        
+        results_L = sim_L.run_sim(file_prefix='pipeburst_alt_tmp')
        
 
             
@@ -299,7 +300,8 @@ sort_and_save_by_similarity(input_filename)
 
 #sys.exit()
 
-inp_file = 'Schwaz_20230529_Min.inp'
+#inp_file = 'Schwaz_20230529_Min.inp'
+inp_file = sys.argv[1]
 f = open(inp_file)
 success, val = misc_light.swmm_input_read(f)
 network_graph = graph_editing.create_graph_of_epanet_file(val)

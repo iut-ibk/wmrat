@@ -43,7 +43,7 @@ def hydraulics_validation (inp_file, pipes1):
     wn.options.hydraulic.demand_model = 'PDD'
     wn.options.time.duration = 1
     sim = wntr.sim.EpanetSimulator(wn)
-    results = sim.run_sim()
+    results = sim.run_sim(file_prefix='hyd_val_tmp')
 
     
     # Calculate the total demand supplied during the simulation

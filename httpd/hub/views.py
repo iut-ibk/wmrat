@@ -204,6 +204,9 @@ def get_analyses_info_dict_with_defaults():
 
         #NOTE: guard against typos, etc.:
         if set(analysis_info['params'].keys()) != set(ex_info.keys()):
+
+            print(analysis_info['params'].keys())
+            print(ex_info.keys())
             return False, f'{key}: parameter mismatch'
 
         for key_name, key_val in ex_info.items():

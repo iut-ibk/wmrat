@@ -1,12 +1,126 @@
-import wntr
+from copy import deepcopy
 import sys
 import numpy as np
-import matplotlib.pyplot as plt
+from platform import node
+from turtle import clear, color
 import json
-import os
-from scipy.stats import rankdata
+from itertools import cycle
+import networkx as nx
+import matplotlib.pyplot as plt
+import matplotlib as mpl
 import pandas as pd
+from matplotlib import cm
+import math
+import copy
+from collections import Counter
+from collections import OrderedDict
+from operator import itemgetter, truediv
+from scipy.stats import rankdata
+import misc_light
+import graph_editing
+import os
+from numpy import log as ln
 import time
+import wntr
+
+import epanet_util as enu
+
+#def run(epanet_inp_path, param_dict, output_dir):
+#    start_time = time.time()
+#
+#    if not os.path.exists(output_dir):
+#        os.makedirs(output_dir)
+#
+#    success, val = enu.epanet_inp_read(epanet_inp_path)
+#    if not success:
+#        return False #XXX
+#
+#    epanet_dict = val
+#
+#    #XXX: do not hard-code this ... when importing demand it from the user?
+#    epanet_epsg_code = 31254
+#
+#    success, val = enu.epanet_to_graph(epanet_dict)
+#    if not success:
+#        return False #XXX
+#
+#    graph = val
+#
+#    nodes, edges = graph
+#
+#    #print('--- NODES ---')
+#    #for k, v in nodes.items():
+#    #    print(k, v)
+#
+#    #print('--- EDGES ---')
+#    #for k, v in edges.items():
+#    #    print(k, v)
+#
+#    print('nodes', len(nodes))
+#    print('edges', len(edges))
+#
+#    G = nx.Graph()
+#
+#    for node, node_info in nodes.items():
+#        G.add_node(node, x=node_info['coords'][0][0], y=node_info['coords'][0][1])
+#
+#    valves = dict()
+#
+#    for edge_name, edge_info in edges.items():
+#        node1 = edge_info["node1"]
+#        node2 = edge_info["node2"]
+#
+#        #XXX 
+#        if edge_info['type'] != 'VALVE':
+#            G.add_edge(node1, node2, name=edge_name)
+#        else:
+#            valves[edge_name] = edge_info
+#
+#    colors = cycle(plt.rcParams['axes.prop_cycle'].by_key()['color'])
+#
+#    connected_components = list(nx.connected_components(G))
+#
+#    node_colors = {}
+#    for i, component in enumerate(connected_components):
+#        color = next(colors)
+#        for node in component:
+#            node_colors[node] = color
+#
+#    segment_valves_map = {}
+#    for i, segment in enumerate(connected_components):
+#        segment_valves_map[i] = {
+#            'nodes': segment,
+#            'valves': set(),
+#        }
+#
+#        for valve, valve_info in valves.items():
+#            if valve_info['node1'] in segment or valve_info['node2'] in segment:
+#                segment_valves_map[i]['valves'].add(valve)
+#
+#    #print(type(G))
+#
+#    # Iterate over the connected components
+#    for key, val in segment_valves_map.items():
+#        print('segment', key)
+#        print('info', val)
+#        print('---')
+#
+#    # Print the number of nodes and edges
+#    print('#nodes', len(G.nodes))
+#    print('#edges', len(G.edges))
+#
+#    num_subgraphs = len(list(nx.connected_components(G)))
+#    print('#connected components', num_subgraphs)
+#
+#    print(len(valves))
+#
+#    #print('avg', nx.average_node_connectivity(graph))
+#
+#    #pos = {node: (attrs['coords'][0][0], attrs['coords'][0][1]) for node, attrs in nodes.items()}
+#    #nx.draw(G, pos, with_labels=False, font_weight='bold', node_size=10, node_color=[node_colors[node] for node in G.nodes])
+#    #plt.show()
+#    
+#    return True
 
 def run(epanet_inp_path, param_dict, output_dir):
     start_time = time.time()
@@ -37,7 +151,7 @@ def run(epanet_inp_path, param_dict, output_dir):
     
     # Run a preliminary simulation to determine if junctions drop below threshold during normal condition
     sim = wntr.sim.EpanetSimulator(wn)
-    results = sim.run_sim(file_prefix='single_pipe_failure_epanet_normal_tmp')
+    results = sim.run_sim(file_prefix='segment_criticality_normal_tmp')
     
     # Criticality analysis, closing one pipe for each simulation
     min_pressure = results.node['pressure'].loc[:,wn.junction_name_list].min()
@@ -60,7 +174,7 @@ def run(epanet_inp_path, param_dict, output_dir):
         sim = wntr.sim.EpanetSimulator(wn)
     
         try:
-            results = sim.run_sim(file_prefix='single_pipe_failure_epanet_alt_tmp')
+            results = sim.run_sim(file_prefix='segment_criticality_alt_tmp')
         except Exception as e:
             #XXX: maybe not save, but works for now: important: we *have* to reset state (to have clean simulation environment)
             wn.remove_control("close pipe" + pipe_name)
