@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<!-- main content -->
+<main class="container">
+    <div class="content">
+
+        <div class="row" style="margin-top: 32px;">
+
+            <h1 style="text-align: center;">{{ analysis.name }}</h1>
+            <h3 style="text-align: center; color: #888888">{{ network.name }}</h3>
+            <h6 style="text-align: center; color: #444444">{{ analysis.submitted|date:"Y.m.d" }}</h6>
+
+        </div>
+
+        <ul class="nav nav-tabs" id="myTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <a class="nav-link active" id="map-tab" data-bs-toggle="tab" href="#map" role="tab" aria-controls="map" aria-selected="true">Map</a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="example-tab" data-bs-toggle="tab" href="#example" role="tab" aria-controls="example" aria-selected="false">Top 10 Pipe Criticality</a>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="myTabsContent">
+            <div class="tab-pane fade show active" id="map" role="tabpanel" aria-labelledby="map-tab">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <!-- XXX: hacky hardcoded -->
+                        <div id="map_id" style="height: 800px; width: 100%; border-radius: 8px;"></div>
+                        <p id="info_text" style="margin-top: 8px; text-align: center; font-weight: bold;">Click on a pipe to see affected nodes.</p>
+                    </div>
+                    <p style="text-align: center;"><a href="download"><button class="btn btn-warning btn-sm"><i class="fas fa-download"></i> download</button></a> or <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#exampleModal"><i class="fas fa-palette"></i> change style</button></p>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="example" role="tabpanel" aria-labelledby="example-tab">
+                <div class="row" style="margin-top: 32px;">
+                    <div class="col-sm-12">
+                        <canvas id="barChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">Color Ramp</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                                <label for="colorAInput" class="form-label">Color A</label>
+                                <input type="color" class="form-control" id="colorAInput" value="{{ default_color_ramp.0 }}">
+                        </div>
+                        <div class="col-md-4">
+                                <label for="colorBInput" class="form-label">Color B</label>
+                                <input type="color" class="form-control" id="colorBInput" value="{{ default_color_ramp.1 }}">
+                        </div>
+                        <div class="col-md-4">
+                                <label for="strokeWidthInput" class="form-label">Stroke Weight</label>
+                                <input type="number" class="form-control" id="strokeWidthInput" min="1" value="2">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" id="saveChangesBtn" class="btn btn-primary" data-bs-dismiss="modal">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<script>
+    let ncolor_parts = 50;
+
+    saveChangesBtn.addEventListener("click", function () {
+        var colorA = colorAInput.value;
+        var colorB = colorBInput.value;
+        var strokeWidth = strokeWidthInput.value;
+
+        color_list = make_color_ramp(colorA, colorB, ncolor_parts);
+
+        console.log(colorA, colorB);
+        links.eachLayer(function(featureInstanceLayer) {
+            if (atype === 'single_pipe_failure_epanet') {
+                var n = featureInstanceLayer.feature.properties.junctions_impacted.length;
+            }
+            else {
+                var n = featureInstanceLayer.feature.properties.junctions_impacted;
+            }
+
+            featureInstanceLayer.setStyle({
+                color: getColor(color_list, numberMap, n),
+                weight: strokeWidth,
+            });
+        });
+    });
+
+    function make_color_ramp(color1, color2, nparts) {
+        color1 = color1.slice(1);
+        color2 = color2.slice(1);
+
+        const [r0, g0, b0] = [0, 2, 4].map(i => parseInt(color1.slice(i, i + 2), 16));
+        const [r1, g1, b1] = [0, 2, 4].map(i => parseInt(color2.slice(i, i + 2), 16));
+
+        const r_step = (r1 - r0) / (nparts - 1);
+        const g_step = (g1 - g0) / (nparts - 1);
+        const b_step = (b1 - b0) / (nparts - 1);
+
+        const colors = [];
+
+        for (let i = 0; i < nparts; i++) {
+            const r = Math.round(r0 + i * r_step);
+            const g = Math.round(g0 + i * g_step);
+            const b = Math.round(b0 + i * b_step);
+
+            const hexString = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+
+            colors.push(hexString);
+        }
+
+        return colors;
+    }
+
+    function getColor(colors, number_map, n) {
+        const nparts = colors.length;
+        const idx = number_map[n];
+        const factor = nparts / Object.keys(number_map).length;
+        color = colors[Math.floor(idx * factor)];
+        return color;
+    }
+
+    var atype = "{{ analysis.analysis_type }}";
+    console.log(atype);
+
+    var defaultLatLng = new L.LatLng(47.263, 11.404)
+
+    let attrib = 'Datenquelle: <a href="https://basemap.at">basemap.at</a>';
+
+    var url_standard = 'https://{s}.wien.gv.at/basemap/geolandbasemap/normal/google3857/{z}/{y}/{x}.png';
+    var tilelayer_standard = L.tileLayer(url_standard, { maxZoom: 22, attribution: attrib, subdomains: ['maps1', 'maps2', 'maps3', 'maps4']});
+
+    var url_grau = 'https://{s}.wien.gv.at/basemap/bmapgrau/normal/google3857/{z}/{y}/{x}.png';
+    var tilelayer_grau = L.tileLayer(url_grau, { maxZoom: 22, attribution: attrib, subdomains: ['maps1', 'maps2', 'maps3', 'maps4']});
+
+    var url_orthofoto = 'https://{s}.wien.gv.at/basemap/bmaporthofoto30cm/normal/google3857/{z}/{y}/{x}.jpeg';
+    var tilelayer_orthofoto = L.tileLayer(url_orthofoto, { maxZoom: 22, attribution: attrib, subdomains: ['maps1', 'maps2', 'maps3', 'maps4']});
+
+    var url_gelaende = 'https://{s}.wien.gv.at/basemap/bmapgelaende/grau/google3857/{z}/{y}/{x}.jpeg';
+    var tilelayer_gelaende = L.tileLayer(url_gelaende, { maxZoom: 22, attribution: attrib, subdomains: ['maps1', 'maps2', 'maps3', 'maps4']});
+
+    var url_oberflaeche = 'https://{s}.wien.gv.at/basemap/bmapoberflaeche/grau/google3857/{z}/{y}/{x}.jpeg';
+    var tilelayer_oberflaeche = L.tileLayer(url_oberflaeche, { maxZoom: 22, attribution: attrib, subdomains: ['maps1', 'maps2', 'maps3', 'maps4']});
+
+    var map = new L.Map('map_id', { center: defaultLatLng, zoom: 14, layers: [tilelayer_gelaende, tilelayer_standard, tilelayer_orthofoto, tilelayer_grau, tilelayer_oberflaeche]});
+
+    drawnItems = L.featureGroup().addTo(map);
+
+    const baseLayers = {
+        'Gelaende': tilelayer_gelaende,
+        'Oberflaeche': tilelayer_oberflaeche,
+        'Orthofoto': tilelayer_orthofoto,
+        'Standard': tilelayer_standard,
+        'Grau': tilelayer_grau,
+    };
+
+    const layerControl = L.control.layers(baseLayers).addTo(map);
+
+    var color_list = make_color_ramp('00ff00', 'ff0000', ncolor_parts);
+
+    var links_geojson = {{ links_geojson|safe }};
+    var nodes_geojson = {{ nodes_geojson|safe }};
+
+    var plot_data = {{ plot_data|safe }};
+
+    const junctionsImpactedArray = [];
+
+    for (const feature of links_geojson.features) {
+        if (feature.properties && feature.properties.junctions_impacted) {
+            if (atype === 'single_pipe_failure_epanet') {
+                junctionsImpactedArray.push(feature.properties.junctions_impacted.length);
+            }
+            else {
+                junctionsImpactedArray.push(feature.properties.junctions_impacted);
+            }
+        }
+    }
+
+    const junctionsImpactedArrayUnique = [...new Set(junctionsImpactedArray)].sort((a, b) => a - b);
+
+    var numberMap = {};
+
+    for (let i = 0; i < junctionsImpactedArrayUnique.length; i++) {
+        numberMap[junctionsImpactedArrayUnique[i]] = i;
+    }
+
+    let nodes = L.geoJson(nodes_geojson, {
+        pointToLayer: function (feature, latlng) {
+            let node_type = feature.properties.type;
+            return L.circleMarker(latlng, {
+                opacity: 0.0,
+                radius: 2,
+                fillColor: '#000088',
+                fillOpacity: 0.5,
+            });
+        },
+    });
+
+    let links = L.geoJson(links_geojson, {
+        style: function(feature) {
+            if (atype === 'single_pipe_failure_epanet') {
+                return {color: getColor(color_list, numberMap, feature.properties.junctions_impacted.length), weight: 2};
+            }
+            else {
+                return {color: getColor(color_list, numberMap, feature.properties.junctions_impacted), weight: 2};
+            }
+        },
+    });
+
+    links.on('click', function(e) {
+        //console.log(e);
+
+        var properties = e.layer.feature.properties;
+        console.log(properties);
+
+        // get the point ids associated with the line
+        var pointIds = properties.junctions_impacted;
+        console.log(pointIds)
+
+        const infoTextElement = document.getElementById("info_text");
+
+        if (atype === 'single_pipe_failure_epanet') {
+            infoTextElement.textContent = 'Failure of pipe ' + properties.id + ' impacts ' + properties.junctions_impacted.length + ' node(s).'
+        }
+        else {
+            infoTextElement.textContent = 'Failure of pipe ' + properties.id + ' impacts ' + properties.junctions_impacted + ' node(s).'
+        }
+
+        // iterate over the point layer and change the color of the associated points
+        if (atype === 'single_pipe_failure_epanet') {
+            nodes.eachLayer(function (layer) {
+                if (pointIds.includes(layer.feature.properties.id)) {
+                    layer.setStyle({
+                        opacity: 0.0,
+                        radius: 5,
+                        fillColor: 'red',
+                        fillOpacity: 1.0,
+                    });
+                }
+                else {
+                    layer.setStyle({
+                        opacity: 0.0,
+                        radius: 2,
+                        fillColor: '#000088',
+                        fillOpacity: 0.5,
+                    });
+                }
+            });
+        }
+    });
+
+    drawnItems.addLayer(links);
+    drawnItems.addLayer(nodes);
+
+    map.fitBounds(drawnItems.getBounds());
+
+    const ctx = document.getElementById('barChart').getContext('2d');
+    var chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: plot_data.map(item => item.label),
+            datasets: [{
+                label: '{{ pretty_output_name }}',
+                data: plot_data.map(item => item.value),
+            }],
+        },
+    });
+
+    chart.options.animation = false;
+
+</script>
+
+{% endblock %}

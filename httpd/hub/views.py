@@ -90,13 +90,7 @@ def epanet_archive(request):
     #XXX todo
     return render(request, 'epanet_archive.html', context)
 
-@login_required
-def visualize_result(request, analysis_id):
-    analysis = get_object_or_404(Analysis, id=analysis_id)
-
-    analysis_name = analysis.name
-    analysis_type = analysis.analysis_type
-
+def viz_single_pipe_failure_epanet(analysis, request):
     network = analysis.wm_network
 
     network_path = settings.WMRAT_NETWORK_DIR / str(network.id)
@@ -143,7 +137,7 @@ def visualize_result(request, analysis_id):
             val = link_infos[link_name]
         else:
             #XXX: hacky
-            val = [] if analysis.analysis_type == 'single_pipe_failure_epanet' else 0 #XXX: not really correct, but fow now ...
+            val = [] #XXX: not really correct, but fow now ...
 
         link['properties'][property_name] = val
 
@@ -154,7 +148,7 @@ def visualize_result(request, analysis_id):
         data_point = {
             'label': k,
             #XXX
-            'value': len(v) if analysis.analysis_type == 'single_pipe_failure_epanet' else v,
+            'value': len(v),
         }
         plot_data.append(data_point)
 
@@ -174,7 +168,101 @@ def visualize_result(request, analysis_id):
         'pretty_output_name': pretty_output_name,
     }
 
-    return render(request, 'visualize_result.html', context)
+    return render(request, 'viz_single_pipe_failure_epanet.html', context)
+
+def viz_single_pipe_failure_graph(analysis, request):
+    network = analysis.wm_network
+
+    network_path = settings.WMRAT_NETWORK_DIR / str(network.id)
+
+    with open(network_path / 'gis' / 'links.geojson') as f:
+        geojson_links = json.load(f)
+
+    with open(network_path / 'gis' / 'nodes.geojson') as f:
+        geojson_nodes = json.load(f)
+
+    #TODO: hacky ... (we do that 2x)
+    analysis_path = settings.WMRAT_ANALYSIS_DIR / str(analysis.id)
+    new_results_name = f'{analysis.id}_{analysis.name}'.replace(' ', '_')
+
+    success, val = get_analyses_info_dict_with_defaults()
+    if not success:
+        err_str = val
+        return HttpResponseServerError(err_str)
+
+    analyses_info_all = val
+
+    #print(analyses_info_all)
+
+    analyses_info = analyses_info_all[analysis.analysis_type]
+
+    file_name = analyses_info['output']['file_name']
+    property_name = analyses_info['output']['property_name']
+
+    pretty_analysis_type = analyses_info['pretty']
+
+    pretty_output_name = analyses_info['output']['pretty']
+
+    json_path = analysis_path / new_results_name / file_name
+
+    #XXX: currently we only support to append to links
+    with open(json_path) as f:
+        link_infos = json.load(f)
+
+    #print(links)
+
+    for link in geojson_links['features']:
+        link_name = link['properties']['id']
+        if link_name in link_infos:
+            val = link_infos[link_name]
+        else:
+            #XXX: hacky
+            val = 0 #XXX: not really correct, but fow now ...
+
+        link['properties'][property_name] = val
+
+    print('len', len(link_infos))
+
+    plot_data = []
+    for k, v in link_infos.items():
+        data_point = {
+            'label': k,
+            #XXX
+            'value': v,
+        }
+        plot_data.append(data_point)
+
+    plot_data = sorted(plot_data, key=lambda entry: entry['value'], reverse=True)[:25]
+
+    #print(plot_data)
+
+    context = {
+        'default_color_ramp': ('#ff0000', '#00ff00'),
+        'page_title': 'Result', #TODO: better name
+        'links_geojson': geojson_links,
+        'nodes_geojson': geojson_nodes,
+        'analysis': analysis,
+        'pretty_analysis_type': pretty_analysis_type,
+        'network': network, #XXX?
+        'plot_data': plot_data,
+        'pretty_output_name': pretty_output_name,
+    }
+
+    return render(request, 'viz_single_pipe_failure_graph.html', context)
+
+@login_required
+def visualize_result(request, analysis_id):
+    analysis = get_object_or_404(Analysis, id=analysis_id)
+
+    analysis_name = analysis.name
+    analysis_type = analysis.analysis_type
+
+    if analysis_type == 'single_pipe_failure_epanet':
+        return viz_single_pipe_failure_epanet(analysis, request)
+    elif analysis_type == 'single_pipe_failure_graph':
+        return viz_single_pipe_failure_graph(analysis, request)
+    else:
+        return HttpResponseServerError('no visualization for that type of analysis')
 
 def get_analyses_info_dict_with_defaults():
     # get all supported analyses
