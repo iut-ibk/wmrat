@@ -467,6 +467,8 @@ def new(request):
                 except ValueError as e:
                     return HttpResponseBadRequest(f'{param_key} must be an integer')
 
+            #TODO: table/array/json thing?
+
             else:
                 return HttpResponseServerError(f"unsupported type: {param_val['type']}")
 

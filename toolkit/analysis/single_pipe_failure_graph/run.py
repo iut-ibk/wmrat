@@ -79,36 +79,6 @@ def run(epanet_inp_path, param_dict, output_dir):
     
     L = EBCQ(SP, L, K)
     
-    #print(L)
-    
-    # Calculating all pressure losses
-    
-    #Losses_all = {key: Hv[key] * (L.get(key, 0)/1000)**2 for key in Hv}
-    
-    #pressure_threshold = 14.00
-    
-    #Z = dict()
-    #Z.update(dict.fromkeys(network_graph.nodes(), 0.0))
-    
-    #def EBCQP(SP, Z, Losses_all):
-    #    for node, demand in K.items():
-    #        path = SP[node]
-    #        if len(path) == 1:
-    #            continue
-    #        else:
-    #            for i in range(len(path)-1):
-    #                u = path[i]
-    #                v = path[i+1]
-    #                if(u, v) not in Losses_all:
-    #                   Z[node] += Losses_all.get((v, u), 0)
-    #                else:
-    #                    Z[node] += Losses_all.get((u, v), 0)
-    #    return(Z)
-    
-    #Z = EBCQP(SP, Z, Losses_all)
-    #Rel_Elevation = {key: elevation['1']- elevation.get(key, 0) for key in elevation}
-    #Pressure_normal = {key: Rel_Elevation[key] - Z.get(key, 0) for key in Rel_Elevation}
-        
     # Creating dict M with ranking of pipe importance
     # Adding EBCQ to edge attributes 
     M = dict(zip(L.keys(), rankdata([-i for i in L.values()], method='min')))
@@ -256,5 +226,5 @@ def run(epanet_inp_path, param_dict, output_dir):
     demand_impacted_output.to_csv(output_dir + '/out.csv', sep=';')
     print('Duration: {}'.format(time.time()-start_time))
 
-    return True
+    return None, False
 

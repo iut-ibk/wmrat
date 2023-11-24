@@ -8,6 +8,7 @@ import wntr
 import analysis.single_pipe_failure_graph.run as single_pipe_failure_graph
 import analysis.single_pipe_failure_epanet.run as single_pipe_failure_epanet
 import analysis.segment_criticality.run as segment_criticality
+import analysis.multi_pipe_failure_graph.run as multi_pipe_failure_graph
 
 if len(sys.argv) != 5:
     print(f'usage: {sys.argv[0]} <analysis-type> <epanet-input> <param-json> <outputdir>', file=sys.stderr)
@@ -31,6 +32,8 @@ if analysis_type == 'single_pipe_failure_graph':
     run = single_pipe_failure_graph.run
 elif analysis_type == 'single_pipe_failure_epanet':
     run = single_pipe_failure_epanet.run
+elif analysis_type == 'multi_pipe_failure_graph':
+    run = multi_pipe_failure_graph.run
 elif analysis_type == 'segment_criticality':
     run = segment_criticality.run
 else:
@@ -38,11 +41,11 @@ else:
     sys.exit(1)
 
 # run analysis
-success = run(epanet_inp_path, param_dict, output_dir)
+val, err = run(epanet_inp_path, param_dict, output_dir)
 
 # something went wrong
-if not success:
-    print(f'error: analysis failed', file=sys.stderr)
+if err:
+    print(f'error: analysis failed: {val}', file=sys.stderr)
     sys.exit(1)
 
 # ... otherwise succeed

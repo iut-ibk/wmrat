@@ -121,5 +121,5 @@ def run(epanet_inp_path, param_dict, output_dir):
     
     print('Duration: {}'.format(time.time()-start_time))
 
-    return True
+    return None, False
 
