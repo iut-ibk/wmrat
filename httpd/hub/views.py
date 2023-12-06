@@ -105,6 +105,8 @@ def viz_single_pipe_failure_epanet(analysis, request):
     analysis_path = settings.WMRAT_ANALYSIS_DIR / str(analysis.id)
     new_results_name = f'{analysis.id}_{analysis.name}'.replace(' ', '_')
 
+    #print(geojson_links)
+
     success, val = get_analyses_info_dict_with_defaults()
     if not success:
         err_str = val
@@ -129,42 +131,36 @@ def viz_single_pipe_failure_epanet(analysis, request):
     with open(json_path) as f:
         link_infos = json.load(f)
 
-    #print(links)
+    link_info_list = []
+    for link_name, junctions_impacted in link_infos.items():
+        if len(junctions_impacted) > 0:
+            link_info_list.append((link_name, len(junctions_impacted)))
 
-    for link in geojson_links['features']:
-        link_name = link['properties']['id']
-        if link_name in link_infos:
-            val = link_infos[link_name]
-        else:
-            #XXX: hacky
-            val = [] #XXX: not really correct, but fow now ...
+    link_info_list = sorted(link_info_list, key=lambda x: x[1], reverse=True)
 
-        link['properties'][property_name] = val
+    #XXX
+    print('len; XXX: what if result less then #pipes? had rewrite', len(link_info_list))
 
-    print('len', len(link_infos))
-
-    plot_data = []
-    for k, v in link_infos.items():
-        data_point = {
-            'label': k,
-            #XXX
-            'value': len(v),
-        }
-        plot_data.append(data_point)
-
-    plot_data = sorted(plot_data, key=lambda entry: entry['value'], reverse=True)[:25]
-
-    #print(plot_data)
+    #XXX: move somewhere else
+    colors = {
+        'PIPE': '#0000ff',
+        'PUMP': '#00ff00',
+        'VALVE': '#ff0000',
+        'JUNCTION': '#000099',
+        'RESERVOIR': '#990000',
+        'TANK': '#009900',
+    }
 
     context = {
         'default_color_ramp': ('#ff0000', '#00ff00'),
         'page_title': 'Result', #TODO: better name
-        'links_geojson': geojson_links,
-        'nodes_geojson': geojson_nodes,
+        'links': geojson_links,
+        'nodes': geojson_nodes,
         'analysis': analysis,
+        'colors': colors,
         'pretty_analysis_type': pretty_analysis_type,
         'network': network, #XXX?
-        'plot_data': plot_data,
+        'result': link_info_list,
         'pretty_output_name': pretty_output_name,
     }
 
@@ -250,6 +246,86 @@ def viz_single_pipe_failure_graph(analysis, request):
 
     return render(request, 'viz_single_pipe_failure_graph.html', context)
 
+def viz_multi_pipe_failure_graph(analysis, request):
+    network = analysis.wm_network
+
+    network_path = settings.WMRAT_NETWORK_DIR / str(network.id)
+
+    with open(network_path / 'gis' / 'links.geojson') as f:
+        geojson_links = json.load(f)
+
+    with open(network_path / 'gis' / 'nodes.geojson') as f:
+        geojson_nodes = json.load(f)
+
+    #TODO: hacky ... (we do that 2x)
+    analysis_path = settings.WMRAT_ANALYSIS_DIR / str(analysis.id)
+    new_results_name = f'{analysis.id}_{analysis.name}'.replace(' ', '_')
+
+    success, val = get_analyses_info_dict_with_defaults()
+    if not success:
+        err_str = val
+        return HttpResponseServerError(err_str)
+
+    analyses_info_all = val
+
+    #print(analyses_info_all)
+
+    analyses_info = analyses_info_all[analysis.analysis_type]
+
+    pretty_analysis_type = analyses_info['pretty']
+    pretty_output_name = analyses_info['output']['pretty']
+
+    json_path = analysis_path / new_results_name / 'data.json'
+
+    with open(json_path) as f:
+        data = json.load(f)
+
+    #print(links)
+
+    property_name = 'multi_pipe_criticality' #XXX
+
+    for link in geojson_links['features']:
+        link['properties'][property_name] = 0
+
+    marked = set()
+
+    for entry in data:
+        for pipe in entry['pipes']:
+            if pipe not in marked:
+                marked.add(pipe)
+                geojson_links['features'][pipe]['properties'][property_name] = entry['hyd_failure']
+                #XXX: no, does not make sense
+
+
+    print('len', len(link_infos))
+
+    plot_data = []
+    for k, v in link_infos.items():
+        data_point = {
+            'label': k,
+            #XXX
+            'value': v,
+        }
+        plot_data.append(data_point)
+
+    plot_data = sorted(plot_data, key=lambda entry: entry['value'], reverse=True)[:25]
+
+    #print(plot_data)
+
+    context = {
+        'default_color_ramp': ('#ff0000', '#00ff00'),
+        'page_title': 'Result', #TODO: better name
+        'links_geojson': geojson_links,
+        'nodes_geojson': geojson_nodes,
+        'analysis': analysis,
+        'pretty_analysis_type': pretty_analysis_type,
+        'network': network, #XXX?
+        'plot_data': plot_data,
+        'pretty_output_name': pretty_output_name,
+    }
+
+    return render(request, 'viz_multi_pipe_failure_graph.html', context)
+
 @login_required
 def visualize_result(request, analysis_id):
     analysis = get_object_or_404(Analysis, id=analysis_id)
@@ -261,6 +337,8 @@ def visualize_result(request, analysis_id):
         return viz_single_pipe_failure_epanet(analysis, request)
     elif analysis_type == 'single_pipe_failure_graph':
         return viz_single_pipe_failure_graph(analysis, request)
+    elif analysis_type == 'multi_pipe_failure_graph':
+        return viz_multi_pipe_failure_graph(analysis, request)
     else:
         return HttpResponseServerError('no visualization for that type of analysis')
 

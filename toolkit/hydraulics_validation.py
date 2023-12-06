@@ -10,7 +10,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import csv
 import time
 
-def hydraulics_validation (inp_file, pipes1):
+def hydraulics_validation(inp_file, pipes1):
   #start_time = time.time()
 
   wn = wntr.network.WaterNetworkModel(inp_file)  

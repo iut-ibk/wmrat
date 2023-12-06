@@ -17,7 +17,7 @@ import itertools
 import hydraulics_validation
 import collections
 import pickle
-import Data_reading
+import data_save
 import random
 import sys
 import wntr
@@ -186,10 +186,11 @@ def run(epanet_inp_path, param_dict, output_dir):
             sorted_dict_H = results_hydraulic
             sorted_dict_H = {key: max(value, 0) for key, value in sorted_dict_H.items()}
 
-            out_data_path = output_dir + '/data.csv'
-            out_sum_path = output_dir + '/summary.csv'
+            out_data_path_csv = output_dir + '/data.csv'
+            out_sum_path_csv = output_dir + '/summary.csv'
+            out_data_path_json = output_dir + '/data.json'
             
-            Data_reading.dataview(sorted_dict_G, sorted_dict_H, combi, count_less_than_zero, length_total, out_data_path, out_sum_path)
+            data_save.dataview(sorted_dict_G, sorted_dict_H, combi, count_less_than_zero, length_total, out_data_path_csv, out_sum_path_csv, out_data_path_json)
         
             combi = combi + 1
         
