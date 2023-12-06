@@ -257,6 +257,8 @@ def viz_multi_pipe_failure_graph(analysis, request):
     analysis_path = settings.WMRAT_ANALYSIS_DIR / str(analysis.id)
     new_results_name = f'{analysis.id}_{analysis.name}'.replace(' ', '_')
 
+    #print(geojson_links)
+
     success, val = get_analyses_info_dict_with_defaults()
     if not success:
         err_str = val
@@ -268,55 +270,53 @@ def viz_multi_pipe_failure_graph(analysis, request):
 
     analyses_info = analyses_info_all[analysis.analysis_type]
 
+    file_name = analyses_info['output']['file_name']
+    property_name = analyses_info['output']['property_name']
+
     pretty_analysis_type = analyses_info['pretty']
+
     pretty_output_name = analyses_info['output']['pretty']
 
+    #XXX: here different other stuff mostly same
     json_path = analysis_path / new_results_name / 'data.json'
 
+    #XXX: currently we only support to append to links
     with open(json_path) as f:
-        data = json.load(f)
+        result_json = json.load(f)
 
-    #print(links)
+    result_list = []
+    for entry in result_json:
+        list_item = (
+            entry['pipes'],
+            int(entry['rank_G']),
+            int(entry['rank_H']),
+            entry['hyd_failure'],
+        )
+        result_list.append(list_item)
 
-    property_name = 'multi_pipe_criticality' #XXX
+    #XXX
+    #print('len; XXX: what if result less then #pipes? had rewrite', len(link_info_list))
 
-    for link in geojson_links['features']:
-        link['properties'][property_name] = 0
-
-    marked = set()
-
-    for entry in data:
-        for pipe in entry['pipes']:
-            if pipe not in marked:
-                marked.add(pipe)
-                geojson_links['features'][pipe]['properties'][property_name] = entry['hyd_failure']
-                #XXX: no, does not make sense
-
-
-    print('len', len(link_infos))
-
-    plot_data = []
-    for k, v in link_infos.items():
-        data_point = {
-            'label': k,
-            #XXX
-            'value': v,
-        }
-        plot_data.append(data_point)
-
-    plot_data = sorted(plot_data, key=lambda entry: entry['value'], reverse=True)[:25]
-
-    #print(plot_data)
+    #XXX: move somewhere else
+    colors = {
+        'PIPE': '#0000ff',
+        'PUMP': '#00ff00',
+        'VALVE': '#ff0000',
+        'JUNCTION': '#000099',
+        'RESERVOIR': '#990000',
+        'TANK': '#009900',
+    }
 
     context = {
         'default_color_ramp': ('#ff0000', '#00ff00'),
         'page_title': 'Result', #TODO: better name
-        'links_geojson': geojson_links,
-        'nodes_geojson': geojson_nodes,
+        'links': geojson_links,
+        'nodes': geojson_nodes,
         'analysis': analysis,
+        'colors': colors,
         'pretty_analysis_type': pretty_analysis_type,
         'network': network, #XXX?
-        'plot_data': plot_data,
+        'result': result_list,
         'pretty_output_name': pretty_output_name,
     }
 
