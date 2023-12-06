@@ -16,6 +16,7 @@
             <tr>
                 <th scope="col">ID</th>
                 <th scope="col">Name</th>
+                <th scope="col">Type</th>
                 <th scope="col">Date</th>
                 <th scope="col">Status</th>
                 <th scope="col">Info</th>
@@ -31,6 +32,7 @@
                 <!-- analysis meta information -->
                 <td class="align-middle">{{ analysis.id }}</td>
                 <td class="align-middle">{{ analysis.name }}</td>
+                <td class="align-middle">{{ analysis.analysis_type }}</td>
                 <td class="align-middle">{{ analysis.submitted|date:"Y.m.d" }}</td>
 
                 <!-- status -->

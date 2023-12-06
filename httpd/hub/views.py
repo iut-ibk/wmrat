@@ -181,6 +181,8 @@ def viz_single_pipe_failure_graph(analysis, request):
     analysis_path = settings.WMRAT_ANALYSIS_DIR / str(analysis.id)
     new_results_name = f'{analysis.id}_{analysis.name}'.replace(' ', '_')
 
+    #print(geojson_links)
+
     success, val = get_analyses_info_dict_with_defaults()
     if not success:
         err_str = val
@@ -205,42 +207,36 @@ def viz_single_pipe_failure_graph(analysis, request):
     with open(json_path) as f:
         link_infos = json.load(f)
 
-    #print(links)
+    link_info_list = []
+    for link_name, ebcq_val in link_infos.items():
+        if ebcq_val > 0:
+            link_info_list.append((link_name, ebcq_val))
 
-    for link in geojson_links['features']:
-        link_name = link['properties']['id']
-        if link_name in link_infos:
-            val = link_infos[link_name]
-        else:
-            #XXX: hacky
-            val = 0 #XXX: not really correct, but fow now ...
+    link_info_list = sorted(link_info_list, key=lambda x: x[1], reverse=True)
 
-        link['properties'][property_name] = val
+    #XXX
+    print('len; XXX: what if result less then #pipes? had rewrite', len(link_info_list))
 
-    print('len', len(link_infos))
-
-    plot_data = []
-    for k, v in link_infos.items():
-        data_point = {
-            'label': k,
-            #XXX
-            'value': v,
-        }
-        plot_data.append(data_point)
-
-    plot_data = sorted(plot_data, key=lambda entry: entry['value'], reverse=True)[:25]
-
-    #print(plot_data)
+    #XXX: move somewhere else
+    colors = {
+        'PIPE': '#0000ff',
+        'PUMP': '#00ff00',
+        'VALVE': '#ff0000',
+        'JUNCTION': '#000099',
+        'RESERVOIR': '#990000',
+        'TANK': '#009900',
+    }
 
     context = {
         'default_color_ramp': ('#ff0000', '#00ff00'),
         'page_title': 'Result', #TODO: better name
-        'links_geojson': geojson_links,
-        'nodes_geojson': geojson_nodes,
+        'links': geojson_links,
+        'nodes': geojson_nodes,
         'analysis': analysis,
+        'colors': colors,
         'pretty_analysis_type': pretty_analysis_type,
         'network': network, #XXX?
-        'plot_data': plot_data,
+        'result': link_info_list,
         'pretty_output_name': pretty_output_name,
     }
 
