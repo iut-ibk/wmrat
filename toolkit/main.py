@@ -9,6 +9,7 @@ import analysis.single_pipe_failure_graph.run as single_pipe_failure_graph
 import analysis.single_pipe_failure_epanet.run as single_pipe_failure_epanet
 import analysis.segment_criticality.run as segment_criticality
 import analysis.multi_pipe_failure_graph.run as multi_pipe_failure_graph
+import analysis.single_pipe_leakage.run as single_pipe_leakage
 
 if len(sys.argv) != 5:
     print(f'usage: {sys.argv[0]} <analysis-type> <epanet-input> <param-json> <outputdir>', file=sys.stderr)
@@ -34,6 +35,8 @@ elif analysis_type == 'single_pipe_failure_epanet':
     run = single_pipe_failure_epanet.run
 elif analysis_type == 'multi_pipe_failure_graph':
     run = multi_pipe_failure_graph.run
+elif analysis_type == 'single_pipe_leakage':
+    run = single_pipe_leakage.run
 elif analysis_type == 'segment_criticality':
     run = segment_criticality.run
 else:

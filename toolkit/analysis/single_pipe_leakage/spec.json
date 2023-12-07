@@ -1,0 +1,20 @@
+{
+    "pretty": "Multi pipe failure (graph-based)",
+    "params": {
+        "source": {
+            "pretty": "Source",
+            "type": "STRING"
+        },
+        "n_combs": {
+            "pretty": "Number of combinations",
+            "type": "INT"
+        }
+    },
+    "output": {
+        "wdn_type": "LINK",
+        "file_name": "junctions_impacted.json",
+        "pretty": "Junctions impacted by pipe failure",
+        "property_name": "junctions_impacted"
+    }
+}
+

@@ -93,21 +93,21 @@
     let attrib = 'Datenquelle: <a href="https://basemap.at">basemap.at</a>';
 
     var url_standard = 'https://{s}.wien.gv.at/basemap/geolandbasemap/normal/google3857/{z}/{y}/{x}.png';
-    var tilelayer_standard = L.tileLayer(url_standard, { maxZoom: 22, attribution: attrib, subdomains: ['maps1', 'maps2', 'maps3', 'maps4']});
+    var tilelayer_standard = L.tileLayer(url_standard, { maxZoom: 24, attribution: attrib, subdomains: ['maps1', 'maps2', 'maps3', 'maps4']});
 
     var url_grau = 'https://{s}.wien.gv.at/basemap/bmapgrau/normal/google3857/{z}/{y}/{x}.png';
-    var tilelayer_grau = L.tileLayer(url_grau, { maxZoom: 22, attribution: attrib, subdomains: ['maps1', 'maps2', 'maps3', 'maps4']});
+    var tilelayer_grau = L.tileLayer(url_grau, { maxZoom: 24, attribution: attrib, subdomains: ['maps1', 'maps2', 'maps3', 'maps4']});
 
     var url_orthofoto = 'https://{s}.wien.gv.at/basemap/bmaporthofoto30cm/normal/google3857/{z}/{y}/{x}.jpeg';
-    var tilelayer_orthofoto = L.tileLayer(url_orthofoto, { maxZoom: 22, attribution: attrib, subdomains: ['maps1', 'maps2', 'maps3', 'maps4']});
+    var tilelayer_orthofoto = L.tileLayer(url_orthofoto, { maxZoom: 24, attribution: attrib, subdomains: ['maps1', 'maps2', 'maps3', 'maps4']});
 
     var url_gelaende = 'https://{s}.wien.gv.at/basemap/bmapgelaende/grau/google3857/{z}/{y}/{x}.jpeg';
-    var tilelayer_gelaende = L.tileLayer(url_gelaende, { maxZoom: 22, attribution: attrib, subdomains: ['maps1', 'maps2', 'maps3', 'maps4']});
+    var tilelayer_gelaende = L.tileLayer(url_gelaende, { maxZoom: 24, attribution: attrib, subdomains: ['maps1', 'maps2', 'maps3', 'maps4']});
 
     var url_oberflaeche = 'https://{s}.wien.gv.at/basemap/bmapoberflaeche/grau/google3857/{z}/{y}/{x}.jpeg';
-    var tilelayer_oberflaeche = L.tileLayer(url_oberflaeche, { maxZoom: 22, attribution: attrib, subdomains: ['maps1', 'maps2', 'maps3', 'maps4']});
+    var tilelayer_oberflaeche = L.tileLayer(url_oberflaeche, { maxZoom: 24, attribution: attrib, subdomains: ['maps1', 'maps2', 'maps3', 'maps4']});
 
-    var map = new L.Map('map_id', { center: defaultLatLng, zoom: 14, layers: [tilelayer_gelaende, tilelayer_standard, tilelayer_orthofoto, tilelayer_grau, tilelayer_oberflaeche]});
+    var map = new L.Map('map_id', { center: defaultLatLng, zoom: 24, layers: [tilelayer_gelaende, tilelayer_standard, tilelayer_orthofoto, tilelayer_grau, tilelayer_oberflaeche]});
 
     drawnItems = L.featureGroup().addTo(map);
 

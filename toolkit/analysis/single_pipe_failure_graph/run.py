@@ -23,8 +23,6 @@ import time
 def run(epanet_inp_path, param_dict, output_dir):
     start_time = time.time()
 
-    print('here')
-
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     
@@ -216,7 +214,6 @@ def run(epanet_inp_path, param_dict, output_dir):
     M_failure_int = {}
     for key, val in M_failure_names.items():
         M_failure_int[key] = int(val)
-
 
     junctions_impacted_path = output_dir + '/junctions_impacted.json'
     with open(junctions_impacted_path, 'w') as f:
