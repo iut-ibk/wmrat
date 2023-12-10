@@ -1,13 +1,15 @@
 {
-    "pretty": "Multi pipe failure (graph-based)",
+    "pretty": "Single pipe leakage",
     "params": {
-        "source": {
-            "pretty": "Source",
-            "type": "STRING"
+        "material_info": {
+            "pretty": "Area & Exponent Table",
+            "type": "TABLE",
+            "cols": ["Material", "Area", "Exponent"]
         },
-        "n_combs": {
-            "pretty": "Number of combinations",
-            "type": "INT"
+        "outflow_map": {
+            "pretty": "Outflow Map",
+            "type": "TABLE",
+            "cols": ["Pipe ID", "Tank"]
         }
     },
     "output": {

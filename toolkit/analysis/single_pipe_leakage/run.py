@@ -29,15 +29,16 @@ def run(epanet_inp_path, param_dict, output_dir):
         'j': [None, None, 1, 1, 1, 1, 1]
     }
     
-    leaks = ['c','l','r','j' ]
+    leaks = area_dict.keys()
     
     leak_types = 'j'
     
     list_material = ['PE', 'PVC', 'Asbestos-cement', 'Concrete', 'GUSS', 'GGGUSS', 'STZ']
     
-    list_tanks = {'6154': 'HB_Kraken', '6163': 'HB_Pertrach', '1730': 'HB_Pirchanger', '6139': 'HB_Schmadl'}
-    
-    list_tanks_l = ['HB_Kraken', 'HB_Pertrach', 'HB_Pirchanger', 'HB_Schmadl']
+    list_tanks = param_dict['outflow_map']
+    #list_tanks = {'6154': 'HB_Kraken', '6163': 'HB_Pertrach', '1730': 'HB_Pirchanger', '6139': 'HB_Schmadl'}
+
+    list_tanks_l = list_tanks.values()
     
     negative_outflow_kraken = {}
     
@@ -65,7 +66,7 @@ def run(epanet_inp_path, param_dict, output_dir):
     flow_normal = results.link['flowrate']
     
     #define the list of outflow pipes
-    list_outflow = ['6154','6139','6163','1730']
+    list_outflow = list_tanks.keys()
     flow_rates_outflow_normal = {}
     for pipe_id_list in list_outflow:
             flow_rates_outflow_normal[pipe_id_list] = flow_normal.loc[:,pipe_id_list][0]
@@ -109,7 +110,7 @@ def run(epanet_inp_path, param_dict, output_dir):
         if matching_pipe_tag in list_material:
             index = list_material.index(matching_pipe_tag)
             area = area_dict[leak_types][index]
-            exponent= exponent_data[leak_types][index]
+            exponent = exponent_data[leak_types][index]
         else:
             area = area_dict[leak_types][0]
             exponent = exponent_data[leak_types][0]
@@ -167,7 +168,7 @@ def run(epanet_inp_path, param_dict, output_dir):
     df = pd.DataFrame(negative_outflow_kraken)
     
     # Provide the path where you want to save the Excel file
-    file_path = 'output_data.xlsx'
+    file_path = output_dir + '/output_data.xlsx'
     
     # Save the DataFrame to Excel
     df.to_excel(file_path, index=False)
@@ -185,8 +186,8 @@ def run(epanet_inp_path, param_dict, output_dir):
     
     # Replace 'input_data.xlsx' with the actual Excel file name you want to transpose
     # Replace 'output_data.xlsx' with the desired name for the transposed Excel file
-    output_filename = 'input_data.xlsx'
-    input_filename = 'output_data.xlsx'
+    output_filename = output_dir + '/input_data.xlsx'
+    input_filename = output_dir + '/output_data.xlsx'
     transpose_excel_sheet(input_filename, output_filename)
     
     ########sorting according to tanks
@@ -205,7 +206,7 @@ def run(epanet_inp_path, param_dict, output_dir):
         unique_values = sorted_df.iloc[:, column_index].unique()
     
         # Create a Pandas Excel writer
-        writer = pd.ExcelWriter('output_sorted_by_similarity.xlsx', engine='xlsxwriter')
+        writer = pd.ExcelWriter(output_dir + '/output_sorted_by_similarity.xlsx', engine='xlsxwriter')
     
         # Write each group to a separate sheet
         for value in unique_values:
@@ -218,7 +219,7 @@ def run(epanet_inp_path, param_dict, output_dir):
         writer.save()
     
     # Call the function with the input Excel file name
-    input_filename = 'input_data.xlsx'
+    input_filename = output_dir + '/input_data.xlsx'
     sort_and_save_by_similarity(input_filename)
     
     inp_file = epanet_inp_path
@@ -237,7 +238,7 @@ def run(epanet_inp_path, param_dict, output_dir):
     max_demand = max(demands.values())
     
     # Read data from the Excel file
-    excel_file = 'output_sorted_by_similarity.xlsx'
+    excel_file = output_dir + '/output_sorted_by_similarity.xlsx'
     wb = openpyxl.load_workbook(excel_file)
     sheet = wb.active
     
@@ -293,3 +294,4 @@ def run(epanet_inp_path, param_dict, output_dir):
     plt.title('Network Graph with Color-Coded Edges')
     plt.show()
     
+    return None, False

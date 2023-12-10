@@ -1,4 +1,17 @@
 {
-    "source": "HB_Kraken",
-    "n_combs": 2
+    "material_info": [
+        ["PE", "", ""],
+        ["PVC", "", ""],
+        ["Asbestos-cement", "15", "1"],
+        ["Concrete", "15", "1"],
+        ["GUSS", "15", "1"],
+        ["GGUSS", "5", "1"],
+        ["STZ", "5", "1"]
+    ],
+    "outflow_map": [
+        ["6154", "HB_Kraken"],
+        ["6163", "HB_Pertrach"],
+        ["1730", "HB_Pirchanger"],
+        ["6139", "HB_Schmadl"]
+    ]
 }

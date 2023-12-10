@@ -3,75 +3,107 @@
 {% block content %}
 
 <!-- main content -->
-<main class="container">
-    <div class="content">
+<div class="container">
 
-        <div class="row" style="margin-top: 32px;">
+<div class="row" style="margin-top: 32px;">
 
-            <!-- args -->
-            <div class="col-sm-12">
+<form action="{% url 'new' %}" method="post" id="main_form">
 
-                <form class="row g-3" action="{% url 'new' %}" method="post" id="main_form">
+    {% csrf_token %}
 
-                    {% csrf_token %}
+    <div class="form-row">
 
-                    <div class="col-md-3">
-                        <label for="analysis_name" class="form-label">Analysis name</label>
-                        <input type="text" class="form-control" id="analysis_name" name="analysis_name" value="Test Analysis">
-                    </div>
+    <div class="form-group col-md-4">
+        <label for="analysis_name" class="form-label">Analysis name</label>
+        <input type="text" class="form-control" id="analysis_name" name="analysis_name" value="Test Analysis">
+    </div>
 
-                    <div class="col-md-6">
-                        <label for="network_id" class="form-label">Network</label>
-                        <select name="network_id" class="form-select" aria-label="Default select example">
-                            {% for network in networks %}
-                                <option value="{{ network.id }}">{{network.id}} • {{ network.name }}</option>
-                            {% endfor %}
+    <div class="form-group col-md-4">
+        <label for="network_id" class="form-label">Network</label>
+        <select name="network_id" class="form-control" aria-label="Default select example">
+            {% for network in networks %}
+                <option value="{{ network.id }}">{{network.id}} • {{ network.name }}</option>
+            {% endfor %}
 
-                        </select>
-                    </div>
+        </select>
+    </div>
 
-                    <div class="col-md-3">
-                        <label for="analysis_type" class="form-label">Analysis Type</label>
-                        <select id ="analysis_select" name="analysis_type" class="form-select" aria-label="Default select example" onchange="change_analysis_type(event.target.value)">
-                            {% for a_key, a_val in analyses_info.items %}
-                                <option value="{{ a_key }}">{{ a_val.pretty }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div class="col-12">
-                        <button id="thebutton" type="submit" class="btn btn-success" onclick="checkInput();" disabled><i class="fas fa-circle-nodes"></i> Run analysis</button>
-                    </div>
-
-                    <hr />
-
-                    {% for a_key, a_val in analyses_info.items %}
-                    <div class="argdiv hidden" id="{{ a_key }}">
-
-                    {% for param_name, param_info in a_val.params.items %}
-                    <div class="col-md-12" style="margin-top: 4px;">
-                        <label for="{{param_name}}" class="form-label">{{ param_info.pretty }}</label>
-                        <input type="text" class="form-control" id="{{param_name}}" name="{{param_name}}" value="{{ param_info.default }}">
-                    </div>
-                    {% endfor %}
-
-                    </div>
-                    {% endfor %}
-
-                </form>
-
-            </div>
-
-        </div>
-
-        <div class="row" style="margin-top: 10px;">
-            <div id="alert-ui" class="alert alert-primary" role="alert">
-                You have to provide an EPANET input file.
-            </div>
-        </div>
+    <div class="form-group col-md-4">
+        <label for="analysis_type" class="form-label">Analysis Type</label>
+        <select id ="analysis_select" name="analysis_type" class="form-control" aria-label="Default select example" onchange="change_analysis_type(event.target.value)">
+            {% for a_key, a_val in analyses_info.items %}
+                <option value="{{ a_key }}">{{ a_val.pretty }}</option>
+            {% endfor %}
+        </select>
+    </div>
 
     </div>
-</main>
+
+    <button id="thebutton" type="submit" class="btn btn-success" onclick="checkInput();" disabled><i class="fas fa-circle-nodes"></i> Run analysis</button>
+
+    <hr />
+
+    {% for a_key, a_val in analyses_info.items %}
+    <div class="argdiv hidden" id="{{ a_key }}">
+
+    {% for param_name, param_info in a_val.params.items %}
+    <div class="form-group col-md-12" style="margin-top: 4px;">
+        <label for="{{param_name}}" class="form-label">{{ param_info.pretty }}</label>
+
+        {% if param_info.type == 'FLOAT' or param_info.type == 'INT' or param_info.type == 'STRING' %}
+
+        <input type="text" class="form-control" id="{{ param_name }}" name="{{ param_name }}" value="{{ param_info.default }}">
+
+        {% elif param_info.type == 'TABLE' %}
+
+        <div class="table-responsive">
+
+        <table class="table table-bordered table-striped w-100" id="{{ param_name }}">
+            <thead>
+                <tr>
+                    {% for col_name in param_info.cols %}
+                    <th>{{ col_name }} </th>
+                    {% endfor %}
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entries in param_info.default %}
+                <tr>
+                    {% for col in entries %}
+                    <td contenteditable="true">{{ col }} </td>
+                    {% endfor %}
+                    <td><button class="btn btn-danger btn-sm" onclick="removeRow(this)">Remove</button></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        </div>
+
+        <input type="hidden" name="{{ param_name }}_data" id="{{ param_name }}_data">
+
+        <button type="button" class="btn btn-success btn-sm" onclick="addRow('{{ param_name }}', {{ param_info.cols }})">Add Outflow</button>
+
+        {% endif %}
+
+    </div>
+    {% endfor %}
+
+    </div>
+    {% endfor %}
+
+</form>
+
+</div>
+
+<div class="row" style="margin-top: 10px;">
+    <div id="alert-ui" class="alert alert-primary" role="alert">
+        You have to provide an EPANET input file.
+    </div>
+</div>
+        
+</div>
 
 <style>
 .hidden {
@@ -126,10 +158,67 @@
 
     checkInput();
 
-    /* initial div */
     initial_analysis = Object.keys(analyses_info)[0]
     analysis_select.value = initial_analysis;
     change_analysis_type(initial_analysis);
+
+    /* verbose but works ... (initialize hidden table div with start values) */
+    for (var a_key in analyses_info) {
+        if (analyses_info.hasOwnProperty(a_key) && analyses_info[a_key].params) {
+            for (var param_name in analyses_info[a_key].params) {
+                if (analyses_info[a_key].params.hasOwnProperty(param_name) && analyses_info[a_key].params[param_name].type === 'TABLE') {
+                    updateHiddenInput(param_name);
+                }
+            }
+        }
+    }
+
+    function addRow(tableId, rowData) {
+        var table = document.getElementById(tableId).getElementsByTagName('tbody')[0];
+        var newRow = table.insertRow(table.rows.length);
+        var cells = [];
+        for (var i = 0; i < rowData.length; i++) {
+            cells[i] = newRow.insertCell(i);
+            cells[i].innerHTML = '<div contenteditable="true" oninput="updateHiddenInput(\'' + tableId + '\')">' + rowData[i] + '</div>';
+        }
+        cells[rowData.length] = newRow.insertCell(rowData.length);
+        cells[rowData.length].innerHTML = '<button class="btn btn-danger btn-sm" onclick="removeRow(this); updateHiddenInput(\'' + tableId + '\')">Remove</button>';
+        updateHiddenInput(tableId);
+    }
+
+    function removeRow(btn) {
+        var row = btn.closest('tr');
+        var parentTable = row.closest('table');
+        row.parentNode.removeChild(row);
+        console.log('Row removed successfully');
+        var tableId = parentTable.id;
+        console.log('Table ID:', tableId);
+        updateHiddenInput(tableId);
+    }
+
+    function updateHiddenInput(tableId) {
+        console.log('update');
+
+        var table = document.getElementById(tableId);
+        var data = [];
+        for (var i = 0; i < table.rows.length; i++) {
+            var row = table.rows[i];
+            var rowData = [];
+            for (var j = 0; j < row.cells.length - 1; j++) {
+                rowData.push(row.cells[j].innerText.trim());
+            }
+            data.push(rowData);
+        }
+        document.getElementById(tableId + '_data').value = JSON.stringify(data);
+
+        console.log(document.getElementById(tableId + '_data').value);
+    }
+
+    document.querySelectorAll('table [contenteditable="true"]').forEach(cell => {
+        cell.addEventListener('input', function() {
+            updateHiddenInput(this.closest('table').id);
+        });
+    });
 
 </script>
 

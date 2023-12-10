@@ -362,7 +362,7 @@ def get_analyses_info_dict_with_defaults():
             with open(ex_path) as f:
                 ex_info = json.load(f)
         except Exception as e:
-            return False, f'{ex_path}: parse error'
+            return False, f'{ex_path}: parse error: {e}'
 
         #NOTE: guard against typos, etc.:
         if set(analysis_info['params'].keys()) != set(ex_info.keys()):
@@ -379,7 +379,7 @@ def get_analyses_info_dict_with_defaults():
 
         analyses_info_dict[key] = analysis_info
 
-    #print(analyses_info_dict)
+    print(analyses_info_dict)
     return True, analyses_info_dict
 
 @login_required
@@ -502,7 +502,11 @@ def new(request):
 
     if request.method == 'POST':
         submitted_dict = request.POST.dict()
+
         #submitted_dict.pop('csrfmiddlewaretoken')
+        #print('---')
+        #print(submitted_dict)
+        #print('---')
 
         network_id = int(submitted_dict['network_id'])
 
@@ -541,12 +545,19 @@ def new(request):
                 except ValueError as e:
                     return HttpResponseBadRequest(f'{param_key} must be an integer')
 
-            #TODO: table/array/json thing?
+            elif param_val['type'] == 'TABLE':
+                try:
+                    table_data = json.loads(submitted_dict[f'{param_key}_data'])
+                    arg_dict[param_key] = table_data
+                except ValueError as e:
+                    return HttpResponseBadRequest(f'table data for {param_key} malformed: {e}') #XXX?
 
             else:
                 return HttpResponseServerError(f"unsupported type: {param_val['type']}")
 
-        #print(arg_dict)
+        print('---')
+        print(arg_dict)
+        print('---')
 
         analysis = Analysis(
             name=submitted_dict['analysis_name'],
