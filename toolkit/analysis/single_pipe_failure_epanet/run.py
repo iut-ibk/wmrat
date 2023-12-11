@@ -55,7 +55,7 @@ def run(epanet_inp_path, param_dict, output_dir):
     
         cond = wntr.network.controls.SimTimeCondition(wn, "=", "24:00:00")
         ctrl = wntr.network.controls.Control(cond, act)
-        wn.add_control("close pipe" + pipe_name, ctrl)
+        wn.add_control("close pipe " + pipe_name, ctrl)
     
         sim = wntr.sim.EpanetSimulator(wn)
     
@@ -63,7 +63,7 @@ def run(epanet_inp_path, param_dict, output_dir):
             results = sim.run_sim(file_prefix='single_pipe_failure_epanet_alt_tmp')
         except Exception as e:
             #XXX: maybe not save, but works for now: important: we *have* to reset state (to have clean simulation environment)
-            wn.remove_control("close pipe" + pipe_name)
+            wn.remove_control("close pipe " + pipe_name)
             print(f'something went wrong when running EPANET simulation, continue ... [pipe = {pipe_name}]', e)
             continue
     
@@ -80,33 +80,17 @@ def run(epanet_inp_path, param_dict, output_dir):
         # Calculate demand that cannot be served
         demand_impacted[pipe_name] = demand.loc[analysis_end_time, List_of_junctions_impacted].sum() * 1000
     
-        wn.remove_control("close pipe" + pipe_name)
+        wn.remove_control("close pipe " + pipe_name)
     
     # Extract the number of junctions impacted by low pressure conditions fpr each pipe closure
     
     #number_of_junctions_impacted = dict([(k, len(v)) for k,v in junctions_impacted.items()])
-    
-    N1 = list(dict.values(demand_impacted))
-    int_ = 7
-    N1 = [x / int_ for x in N1]
-    N1 = [0.5 if x==0 else x for x in N1]
     
     #wntr.graphics.plot_network(wn, link_attribute=demand_impacted, node_size=0, link_width=N1, title="Not delivered demand\nfor each pipe closure")
     #plt.show()
     
     # Create pipe ranking and getting the 5 most critical pipes 
     M_failure = dict(zip(demand_impacted.keys(), rankdata([-i for i in demand_impacted.values()], method='min')))
-    #Most_critical_pipes = sorted(M_failure, key=M_failure.get, reverse = False)[:5]
-    #print('The Most Critcal Pipes are:', Most_critical_pipes)
-    
-    # rewrite values to int()
-    #M_failure_int = {}
-    #for key, val in M_failure.items():
-    #    M_failure_int[key] = int(val)
-
-    #demand_impacted_path = output_dir + '/links.json'
-    #with open(demand_impacted_path, 'w') as f:
-    #    f.write(json.dumps(M_failure_int))
 
     junctions_impacted_lists = {}
     for key, val in junctions_impacted.items():

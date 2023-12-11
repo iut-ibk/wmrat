@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-6 main-view">
+            <div class="table-container">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th scope="col">Segment ID</th>
+                            <th scope="col">Junctions impacted</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for segment_id, nodes, junctions_impacted in result %}
+                        <tr>
+                            <td>{{ segment_id }}</td>
+                            <td>{{ junctions_impacted }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div id="map"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+let attrib = 'Datenquelle: <a href="https://basemap.at">basemap.at</a>';
+
+var url_grau = 'https://{s}.wien.gv.at/basemap/bmapgrau/normal/google3857/{z}/{y}/{x}.png';
+var tilelayer_grau = L.tileLayer(url_grau, { maxZoom: 22, attribution: attrib, subdomains: ['maps1', 'maps2', 'maps3', 'maps4']});
+
+var map = new L.Map('map', { zoom: 14, layers: [tilelayer_grau]});
+
+drawnItems = L.featureGroup().addTo(map);
+
+let colors = {{ colors|safe }};
+
+var links_geojson = {{ links|safe }};
+var nodes_geojson = {{ nodes|safe }};
+
+var result_json = {{ result|safe }};
+
+let links = L.geoJson(links_geojson, {
+    style: function(feature) {
+        let link_type = feature.properties.type;
+        return {
+            color: colors[link_type], // || '#000000'
+            weight: 2,
+        }
+    },
+    onEachFeature: function(feature, layer) {
+        let content = '<div class="popup-content"><table class="table table-bordered table-striped">';
+        Object.keys(feature.properties).forEach(function(key) {
+            if (typeof feature.properties[key] === 'object') {
+                // handle nested object
+                content += '<tr><td colspan="2" class="font-weight-bold">' + key + ':</td></tr>';
+                Object.keys(feature.properties[key]).forEach(function(subkey) {
+                    content += '<tr><td class="font-weight-bold">' + subkey + ':</td><td>' + feature.properties[key][subkey] + '</td></tr>';
+                });
+            } else {
+                // handle regular property
+                content += '<tr><td class="font-weight-bold">' + key + ':</td><td>' + feature.properties[key] + '</td></tr>';
+            }
+        });
+        content += '</table></div>';
+        layer.bindPopup(content);
+    }
+});
+
+drawnItems.addLayer(links);
+
+let nodes = L.geoJson(nodes_geojson, {
+    pointToLayer: function (feature, latlng) {
+        let node_type = feature.properties.type;
+        return L.circleMarker(latlng, {
+            // Stroke properties
+            color: colors[node_type], // || '#000000'
+            opacity: 0.75,
+            weight: 5,
+
+            // Fill properties
+            fillColor: '#5EA4D4',
+            fillOpacity: 1.0,
+
+            radius: 3
+        });
+    },
+    onEachFeature: function(feature, layer) {
+        let content = '<div class="popup-content"><table class="table table-bordered table-striped">';
+        Object.keys(feature.properties).forEach(function(key) {
+            if (typeof feature.properties[key] === 'object') {
+                // handle nested object
+                content += '<tr><td colspan="2" class="font-weight-bold">' + key + ':</td></tr>';
+                Object.keys(feature.properties[key]).forEach(function(subkey) {
+                    content += '<tr><td class="font-weight-bold">' + subkey + ':</td><td>' + feature.properties[key][subkey] + '</td></tr>';
+                });
+            } else {
+                // handle regular property
+                content += '<tr><td class="font-weight-bold">' + key + ':</td><td>' + feature.properties[key] + '</td></tr>';
+            }
+        });
+        content += '</table></div>';
+        layer.bindPopup(content);
+    }
+});
+
+drawnItems.addLayer(nodes);
+
+map.fitBounds(drawnItems.getBounds());
+
+function zoomToNodeFeatures(junction_names, clickedRow, n_impacted) {
+    document.querySelectorAll('.table-container tbody tr').forEach(function (row) {
+        row.classList.remove('table-active');
+    });
+
+    var bounds = L.latLngBounds();
+
+    //const colorCycle = ['darkorange', 'green', 'violet', 'brown'];
+    const colorCycle = ['darkorange'];
+
+    let colorIndex = 0; // Index to track the current color
+
+    nodes.eachLayer(function (layer) {
+        if (junction_names.includes(layer.feature.properties.id)) {
+            const color = colorCycle[colorIndex];
+
+            layer.setStyle({
+                color: color,
+                weight: 16,
+            });
+
+            bounds.extend(layer.getLatLng());
+
+            document.getElementById('status-line').innerText = `Junctions impacted: ${parseFloat(n_impacted)}`;
+
+            // Increment colorIndex and cycle back to 0 if it exceeds the length of colorCycle
+            colorIndex = (colorIndex + 1) % colorCycle.length;
+        } else {
+            layer.setStyle({
+                color: colors[layer.feature.properties.type], // Use your original color logic here
+                weight: 2,
+            });
+        }
+    });
+
+    map.flyToBounds(bounds, {
+        duration: 1,
+        maxZoom: 19,
+    });
+
+    clickedRow.classList.add('table-active');
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const tableRows = document.querySelectorAll('.table-container tbody tr');
+    tableRows.forEach(function (row, index) {
+        row.addEventListener('click', function () {
+            let segment_id = row.querySelector('td:nth-child(1)').textContent;
+            let junction_names = result_json[index][1];
+            //console.log(junction_names)
+            const n_impacted = row.querySelector('td:nth-child(2)').textContent;
+            zoomToNodeFeatures(junction_names, row, n_impacted);
+        });
+    });
+});
+
+</script>
+
+{% endblock %}

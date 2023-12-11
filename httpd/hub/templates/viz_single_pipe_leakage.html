@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-6 main-view">
+            <ul class="nav nav-tabs" role="tablist">
+                {% for key, value in result.items %}
+                    <li class="nav-item">
+                        <a class="nav-link{% if forloop.first %} active{% endif %}" id="{{ key }}-tab" data-toggle="tab" href="#{{ key }}" role="tab" aria-controls="{{ key }}" aria-selected="{% if forloop.first %}true{% else %}false{% endif %}">{{ key }}</a>
+                    </li>
+                {% endfor %}
+            </ul>
+
+            <div class="tab-content">
+                {% for key, value in result.items %}
+                    <div class="tab-pane {% if forloop.first %} show active{% endif %}" id="{{ key }}" role="tabpanel" aria-labelledby="{{ key }}-tab">
+                        <div class="table-container">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Pipe ID</th>
+                                        <th scope="col">Tank volume</th>
+                                        <th scope="col">Leakage (l/s)</th>
+                                        <th scope="col">Leakage (l/min)</th>
+                                        <th scope="col">Time to empty (s)</th>
+                                        <th scope="col">Result</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for a, b, c, d, e, f in value %}
+                                        <tr>
+                                            <td>{{ a }}</td>
+                                            <td>{{ b }}</td>
+                                            <td>{{ c }}</td>
+                                            <td>{{ d }}</td>
+                                            <td>{{ e }}</td>
+                                            <td>{{ f }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div id="map"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+let attrib = 'Datenquelle: <a href="https://basemap.at">basemap.at</a>';
+
+var url_grau = 'https://{s}.wien.gv.at/basemap/bmapgrau/normal/google3857/{z}/{y}/{x}.png';
+var tilelayer_grau = L.tileLayer(url_grau, { maxZoom: 22, attribution: attrib, subdomains: ['maps1', 'maps2', 'maps3', 'maps4']});
+
+var map = new L.Map('map', { zoom: 14, layers: [tilelayer_grau]});
+
+drawnItems = L.featureGroup().addTo(map);
+
+let colors = {{ colors|safe }};
+
+var links_geojson = {{ links|safe }};
+var nodes_geojson = {{ nodes|safe }};
+
+var result_json = {{ result|safe }};
+
+let links = L.geoJson(links_geojson, {
+    style: function(feature) {
+        let link_type = feature.properties.type;
+        return {
+            color: colors[link_type], // || '#000000'
+            weight: 2,
+        }
+    },
+    onEachFeature: function(feature, layer) {
+        let content = '<div class="popup-content"><table class="table table-bordered table-striped">';
+        Object.keys(feature.properties).forEach(function(key) {
+            if (typeof feature.properties[key] === 'object') {
+                // handle nested object
+                content += '<tr><td colspan="2" class="font-weight-bold">' + key + ':</td></tr>';
+                Object.keys(feature.properties[key]).forEach(function(subkey) {
+                    content += '<tr><td class="font-weight-bold">' + subkey + ':</td><td>' + feature.properties[key][subkey] + '</td></tr>';
+                });
+            } else {
+                // handle regular property
+                content += '<tr><td class="font-weight-bold">' + key + ':</td><td>' + feature.properties[key] + '</td></tr>';
+            }
+        });
+        content += '</table></div>';
+        layer.bindPopup(content);
+    }
+});
+
+drawnItems.addLayer(links);
+
+let nodes = L.geoJson(nodes_geojson, {
+    pointToLayer: function (feature, latlng) {
+        let node_type = feature.properties.type;
+        return L.circleMarker(latlng, {
+            // Stroke properties
+            color: colors[node_type], // || '#000000'
+            opacity: 0.75,
+            weight: 5,
+
+            // Fill properties
+            fillColor: '#5EA4D4',
+            fillOpacity: 1.0,
+
+            radius: 3
+        });
+    },
+    onEachFeature: function(feature, layer) {
+        let content = '<div class="popup-content"><table class="table table-bordered table-striped">';
+        Object.keys(feature.properties).forEach(function(key) {
+            if (typeof feature.properties[key] === 'object') {
+                // handle nested object
+                content += '<tr><td colspan="2" class="font-weight-bold">' + key + ':</td></tr>';
+                Object.keys(feature.properties[key]).forEach(function(subkey) {
+                    content += '<tr><td class="font-weight-bold">' + subkey + ':</td><td>' + feature.properties[key][subkey] + '</td></tr>';
+                });
+            } else {
+                // handle regular property
+                content += '<tr><td class="font-weight-bold">' + key + ':</td><td>' + feature.properties[key] + '</td></tr>';
+            }
+        });
+        content += '</table></div>';
+        layer.bindPopup(content);
+    }
+});
+
+drawnItems.addLayer(nodes);
+
+map.fitBounds(drawnItems.getBounds());
+
+function zoomToLinkFeatures(linkNames, clickedRow, time_s) {
+    //console.log(typeof linkNames);
+
+    document.querySelectorAll('.table-container tbody tr').forEach(function (row) {
+        row.classList.remove('table-active');
+    });
+
+    var bounds = L.latLngBounds();
+
+    // Define an array of colors to cycle through
+    const colorCycle = ['darkorange', 'green', 'violet', 'brown'];
+
+    let colorIndex = 0; // Index to track the current color
+
+    links.eachLayer(function (layer) {
+        if (linkNames.includes(layer.feature.properties.id)) {
+            const color = colorCycle[colorIndex];
+
+            layer.setStyle({
+                color: color,
+                weight: 16,
+            });
+
+            bounds.extend(layer.getBounds().pad(0.1));
+
+            document.getElementById('status-line').innerText = `Time to empty tank: ${parseFloat(time_s).toFixed(2)}s`;
+
+            // Increment colorIndex and cycle back to 0 if it exceeds the length of colorCycle
+            colorIndex = (colorIndex + 1) % colorCycle.length;
+        } else {
+            layer.setStyle({
+                color: colors[layer.feature.properties.type], // Use your original color logic here
+                weight: 2,
+            });
+        }
+    });
+
+    map.flyToBounds(bounds, {
+        duration: 1,
+        maxZoom: 19,
+    });
+
+    clickedRow.classList.add('table-active');
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const tableRows = document.querySelectorAll('.table-container tbody tr');
+    tableRows.forEach(function (row) {
+        row.addEventListener('click', function () {
+            const linkNames = row.querySelector('td:nth-child(1)').textContent.split(',');
+            const time_s = row.querySelector('td:nth-child(5)').textContent;
+            //console.log(linkNames);
+            zoomToLinkFeatures(linkNames, row, time_s);
+        });
+    });
+});
+
+</script>
+
+{% endblock %}
