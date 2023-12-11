@@ -21,6 +21,7 @@ import subprocess as sp
 from pathlib import Path
 import shutil
 import time
+import pandas as pd
 import sys
 import numpy as np
 import signal
@@ -322,6 +323,79 @@ def viz_multi_pipe_failure_graph(analysis, request):
 
     return render(request, 'viz_multi_pipe_failure_graph.html', context)
 
+def viz_single_pipe_leakage(analysis, request):
+    network = analysis.wm_network
+
+    network_path = settings.WMRAT_NETWORK_DIR / str(network.id)
+
+    with open(network_path / 'gis' / 'links.geojson') as f:
+        geojson_links = json.load(f)
+
+    with open(network_path / 'gis' / 'nodes.geojson') as f:
+        geojson_nodes = json.load(f)
+
+    #TODO: hacky ... (we do that 2x)
+    analysis_path = settings.WMRAT_ANALYSIS_DIR / str(analysis.id)
+    new_results_name = f'{analysis.id}_{analysis.name}'.replace(' ', '_')
+
+    #print(geojson_links)
+
+    success, val = get_analyses_info_dict_with_defaults()
+    if not success:
+        err_str = val
+        return HttpResponseServerError(err_str)
+
+    analyses_info_all = val
+
+    #print(analyses_info_all)
+
+    analyses_info = analyses_info_all[analysis.analysis_type]
+
+    file_name = analyses_info['output']['file_name']
+    property_name = analyses_info['output']['property_name']
+
+    pretty_analysis_type = analyses_info['pretty']
+
+    pretty_output_name = analyses_info['output']['pretty']
+
+    #XXX: here different other stuff mostly same
+    csvs = os.listdir(analysis_path / new_results_name / 'csvs')
+
+    results = {}
+    for csv_path in csvs:
+        name = csv_path[:-4] # drop '.csv'
+        csv_path = str(analysis_path) + '/' + str(new_results_name) + '/csvs/' + csv_path
+        ll = pd.read_csv(csv_path, header=0).values.tolist()
+
+        results[name] = ll
+
+    #print(results)
+
+    #XXX: move somewhere else
+    colors = {
+        'PIPE': '#0000ff',
+        'PUMP': '#00ff00',
+        'VALVE': '#ff0000',
+        'JUNCTION': '#000099',
+        'RESERVOIR': '#990000',
+        'TANK': '#009900',
+    }
+
+    context = {
+        'default_color_ramp': ('#ff0000', '#00ff00'),
+        'page_title': 'Result', #TODO: better name
+        'links': geojson_links,
+        'nodes': geojson_nodes,
+        'analysis': analysis,
+        'colors': colors,
+        'pretty_analysis_type': pretty_analysis_type,
+        'network': network, #XXX?
+        'result': results,
+        'pretty_output_name': pretty_output_name,
+    }
+
+    return render(request, 'viz_single_pipe_leakage.html', context)
+
 @login_required
 def visualize_result(request, analysis_id):
     analysis = get_object_or_404(Analysis, id=analysis_id)
@@ -335,6 +409,8 @@ def visualize_result(request, analysis_id):
         return viz_single_pipe_failure_graph(analysis, request)
     elif analysis_type == 'multi_pipe_failure_graph':
         return viz_multi_pipe_failure_graph(analysis, request)
+    elif analysis_type == 'single_pipe_leakage':
+        return viz_single_pipe_leakage(analysis, request)
     else:
         return HttpResponseServerError('no visualization for that type of analysis')
 
@@ -548,6 +624,7 @@ def new(request):
             elif param_val['type'] == 'TABLE':
                 try:
                     table_data = json.loads(submitted_dict[f'{param_key}_data'])
+                    table_data = table_data[1:] #NOTE: drop table header
                     arg_dict[param_key] = table_data
                 except ValueError as e:
                     return HttpResponseBadRequest(f'table data for {param_key} malformed: {e}') #XXX?

@@ -1,5 +1,6 @@
 # leak analysis
 import wntr
+import os
 import re
 import pandas as pd
 import sys
@@ -29,13 +30,23 @@ def run(epanet_inp_path, param_dict, output_dir):
         'j': [None, None, 1, 1, 1, 1, 1]
     }
     
-    leaks = area_dict.keys()
-    
-    leak_types = 'j'
-    
-    list_material = ['PE', 'PVC', 'Asbestos-cement', 'Concrete', 'GUSS', 'GGGUSS', 'STZ']
-    
-    list_tanks = param_dict['outflow_map']
+    #list_material = ['PE', 'PVC', 'Asbestos-cement', 'Concrete', 'GUSS', 'GGGUSS', 'STZ']
+
+    material_info_str = dict({k: {'area': area, 'exponent': exponent} for [k, area, exponent] in param_dict['material_info']})
+    material_info = {}
+
+    for k, v in material_info_str.items():
+        area_str = v['area']
+        exp_str = v['exponent']
+        entry = {
+            'area': float(area_str) if area_str else None,
+            'exponent': float(exp_str) if exp_str else None,
+        }
+        material_info[k] = entry
+
+    list_tanks = dict({k: v for k, v in param_dict['outflow_map']})
+    #print(list_tanks)
+
     #list_tanks = {'6154': 'HB_Kraken', '6163': 'HB_Pertrach', '1730': 'HB_Pirchanger', '6139': 'HB_Schmadl'}
 
     list_tanks_l = list_tanks.values()
@@ -92,7 +103,7 @@ def run(epanet_inp_path, param_dict, output_dir):
     
     ### getting the pipe data from wntr
     matching_pipe_tag = {}
-    for pipe_id in pipe_ids:
+    for pipe_id in pipe_ids[:100]:
         pipe = wn.get_link(pipe_id)    
         matching_pipe = pipe
     
@@ -107,13 +118,12 @@ def run(epanet_inp_path, param_dict, output_dir):
         exponent = {}
     
         # Matching with the table data
-        if matching_pipe_tag in list_material:
-            index = list_material.index(matching_pipe_tag)
-            area = area_dict[leak_types][index]
-            exponent = exponent_data[leak_types][index]
+        if matching_pipe_tag in material_info.keys():
+            area = material_info[matching_pipe_tag]['area']
+            exponent = material_info[matching_pipe_tag]['exponent']
         else:
-            area = area_dict[leak_types][0]
-            exponent = exponent_data[leak_types][0]
+            area = material_info['default']['area']
+            exponent = material_info['default']['exponent']
     
         # Assigning the values to EPANET
         if exponent == None and area == None:
@@ -189,6 +199,9 @@ def run(epanet_inp_path, param_dict, output_dir):
     output_filename = output_dir + '/input_data.xlsx'
     input_filename = output_dir + '/output_data.xlsx'
     transpose_excel_sheet(input_filename, output_filename)
+
+    csvs_dir = output_dir + '/csvs'
+    os.makedirs(csvs_dir, exist_ok=True)
     
     ########sorting according to tanks
     def sort_and_save_by_similarity(input_filename):
@@ -213,6 +226,8 @@ def run(epanet_inp_path, param_dict, output_dir):
             sheet_name = f'Similarity_{value}'
             df_group = sorted_df[sorted_df.iloc[:, column_index] == value]
             df_group.drop(column_index, axis=1, inplace=True)  # Remove the specified column from the sorted groups
+            csv_name = csvs_dir + f'/{value}.csv'
+            df_group.to_csv(csv_name, index=False)
             df_group.to_excel(writer, sheet_name=sheet_name, index=False)
     
         # Save the Excel file

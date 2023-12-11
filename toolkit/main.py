@@ -43,6 +43,8 @@ else:
     print(f'error: no such analysis: {analysis_type}', file=sys.stderr)
     sys.exit(1)
 
+os.makedirs(output_dir, exist_ok=True)
+
 # run analysis
 val, err = run(epanet_inp_path, param_dict, output_dir)
 
