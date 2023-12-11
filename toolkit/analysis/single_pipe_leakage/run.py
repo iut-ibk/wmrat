@@ -103,7 +103,7 @@ def run(epanet_inp_path, param_dict, output_dir):
     
     ### getting the pipe data from wntr
     matching_pipe_tag = {}
-    for pipe_id in pipe_ids[:100]:
+    for pipe_id in pipe_ids:
         pipe = wn.get_link(pipe_id)    
         matching_pipe = pipe
     
