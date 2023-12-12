@@ -41,14 +41,19 @@ def run(epanet_inp_path, param_dict, output_dir):
 
     # Calculating pressure losses
     hv = copy.deepcopy(weights)
-    lam = float(param_dict['lambda'])
+
+    # hardcoded :/
+    lam = 0.13
+
     hv.update((key, value * lam / (2 * 9.81)) for key, value in hv.items())
     Hv = {key: hv[key] / (C_max.get(key, 0)**2/4000000 * math.pi)**2 for key in hv}
+
+    sources = set([row[0] for row in param_dict['sources']])
     
     # Shortest path from multiple sources
     # Creating dict L with edges
     # Creating dict K by removing nodes with demand 0, when >0, removing Tanks from nodes
-    SP = nx.multi_source_dijkstra_path(network_graph, sources=set(param_dict['sources']), weight='Wei')
+    SP = nx.multi_source_dijkstra_path(network_graph, sources=sources, weight='Wei')
     L = dict()
     L.update(dict.fromkeys(network_graph.edges(), 0.0))
     
@@ -149,7 +154,7 @@ def run(epanet_inp_path, param_dict, output_dir):
         else:
             L1 = dict()
             L1.update(dict.fromkeys(network_graph_2.edges(), 0.0))
-            SP_abnormal = nx.multi_source_dijkstra_path(network_graph_2, sources=set(param_dict['sources']), weight='Wei')
+            SP_abnormal = nx.multi_source_dijkstra_path(network_graph_2, sources=sources, weight='Wei')
             EBCQ_abnormal = EBCQ(SP_abnormal, L1, K)                                                         # L2
             #EBCQ_delta = dict(set(EBCQ_abnormal.items())-set(L.items()))                                    # delta EBCQ
             # Keep only EBCQ_delta > 0

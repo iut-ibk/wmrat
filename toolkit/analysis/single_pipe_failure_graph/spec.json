@@ -1,13 +1,10 @@
 {
     "pretty": "Single pipe failure (graph-based)",
     "params": {
-        "lambda": {
-            "pretty": "Lambda",
-            "type": "FLOAT"
-        },
         "sources": {
             "pretty": "Sources",
-            "type": "ARRAY"
+            "type": "TABLE",
+            "cols": ["Tank"]
         }
     },
     "output": {

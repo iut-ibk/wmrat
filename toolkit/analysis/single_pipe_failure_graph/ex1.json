@@ -1,9 +1,8 @@
 {
-    "lambda": 0.13,
     "sources": [
-        "HB_Pirchanger",
-        "HB_Schmadl",
-        "HB_Pertrach",
-        "HB_Kraken"
+        ["HB_Pirchanger"],
+        ["HB_Schmadl"],
+        ["HB_Pertrach"],
+        ["HB_Kraken"]
     ]
 }
