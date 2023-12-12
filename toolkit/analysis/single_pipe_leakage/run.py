@@ -231,7 +231,7 @@ def run(epanet_inp_path, param_dict, output_dir):
             df_group.to_excel(writer, sheet_name=sheet_name, index=False)
     
         # Save the Excel file
-        writer.save()
+        writer.close()
     
     # Call the function with the input Excel file name
     input_filename = output_dir + '/input_data.xlsx'
