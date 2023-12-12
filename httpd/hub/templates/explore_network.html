@@ -2,197 +2,152 @@
 
 {% block content %}
 
-<!-- main content -->
-<main class="container">
-    <div class="content">
-
-        <div class="row" style="margin-top: 32px;">
-
-            <!-- args -->
-            <div class="col-sm-12">
-
-                <form class="row g-3" action="{% url 'new' %}" method="post" id="main_form">
-
-                    {% csrf_token %}
-
-                    <div class="col-md-3">
-                        <label for="analysis_name" class="form-label">Network name</label>
-                        <input type="text" class="form-control" id="analysis_name" name="analysis_name" value="{{ network.name }}" disabled>
-                    </div>
-
-                    <!-- todo: auto fill from defaults? -->
-                    <div class="col-md-3">
-                        <label for="analysis_name" class="form-label">Begin analysis</label>
-                        <input type="text" class="form-control" id="analysis_name" name="analysis_name" value="2023.01.01" disabled>
-                    </div>
-
-                    <!-- todo: auto fill from defaults? -->
-                    <div class="col-md-3">
-                        <label for="analysis_name" class="form-label">End analysis</label>
-                        <input type="text" class="form-control" id="analysis_name" name="analysis_name" value="2023.01.15" disabled>
-                    </div>
-
-                    <div class="col-md-3">
-                        <label for="analysis_name" class="form-label">End analysis</label>
-                        <input type="text" class="form-control btn btn-success" id="thebutton" name="analysis_name" value="Customize" disabled>
-                    </div>
-
-                    <hr />
-
-                <!-- XXX: no form -->
-                </form>
-
-            </div>
-
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12 main-view">
+            <div id="map"></div>
         </div>
-
-        <div class="row" style="margin-top: 32px;">
-            <!-- map -->
-            <div class="col-sm-12">
-                <!-- XXX: hacky hardocded -->
-                <div id="map_id" style="height: 800px; width=100%; border-radius: 8px;"></div>
-
-            </div>
-
-            <div class="col-sm-6">
-                <div class="row">
-                    <div id="graph1">
-                </div>
-                <div class="row">
-                    <div id="graph2">
-                    </div>
-                </div>
-                <div class="row">
-                    <div id="graph3">
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-        <div class="row" style="margin-top: 32px;">
-            <!-- map -->
-        </div>
-
-        <!--
-        <div class="row" style="margin-top: 10px;">
-            <div id="alert-ui" class="alert alert-primary" role="alert">
-                You have to provide an EPANET input file.
-            </div>
-        </div>
-        -->
-
-        <hr />
-
     </div>
-</main>
+</div>
+
+<div class="footer">
+    <div class="row">
+        <div class="col-md-4">
+            <button class="btn btn-warning">Download</button>
+        </div>
+        <div class="col-md-4 text-center" id="status-line">
+            <p>Click on Junction, Tank, Reservoir, Pipe, Valve or Pump to show its properties.</p>
+        </div>
+        <div class="col-md-4 text-right">
+            <input type="text" id="featureIdInput" placeholder="ID" onkeydown="if(event.key === 'Enter') gotoFeature()">
+            <button class="btn btn-primary" onclick="gotoFeature()">Goto</button>
+        </div>
+    </div>
+</div>
 
 <script>
-    let defaultLatLng = new L.LatLng(47.263, 11.404);
 
-    let attrib = 'Datenquelle: <a href="https://basemap.at">basemap.at</a>';
+let attrib = 'Datenquelle: <a href="https://basemap.at">basemap.at</a>';
 
-    var url_standard = 'https://{s}.wien.gv.at/basemap/geolandbasemap/normal/google3857/{z}/{y}/{x}.png';
-    var tilelayer_standard = L.tileLayer(url_standard, { maxZoom: 24, attribution: attrib, subdomains: ['maps1', 'maps2', 'maps3', 'maps4']});
+var url_grau = 'https://{s}.wien.gv.at/basemap/bmapgrau/normal/google3857/{z}/{y}/{x}.png';
+var tilelayer_grau = L.tileLayer(url_grau, { maxZoom: 22, attribution: attrib, subdomains: ['maps1', 'maps2', 'maps3', 'maps4']});
 
-    var url_grau = 'https://{s}.wien.gv.at/basemap/bmapgrau/normal/google3857/{z}/{y}/{x}.png';
-    var tilelayer_grau = L.tileLayer(url_grau, { maxZoom: 24, attribution: attrib, subdomains: ['maps1', 'maps2', 'maps3', 'maps4']});
+var map = new L.Map('map', { zoom: 14, layers: [tilelayer_grau]});
 
-    var url_orthofoto = 'https://{s}.wien.gv.at/basemap/bmaporthofoto30cm/normal/google3857/{z}/{y}/{x}.jpeg';
-    var tilelayer_orthofoto = L.tileLayer(url_orthofoto, { maxZoom: 24, attribution: attrib, subdomains: ['maps1', 'maps2', 'maps3', 'maps4']});
+drawnItems = L.featureGroup().addTo(map);
 
-    var url_gelaende = 'https://{s}.wien.gv.at/basemap/bmapgelaende/grau/google3857/{z}/{y}/{x}.jpeg';
-    var tilelayer_gelaende = L.tileLayer(url_gelaende, { maxZoom: 24, attribution: attrib, subdomains: ['maps1', 'maps2', 'maps3', 'maps4']});
+let colors = {{ colors|safe }};
 
-    var url_oberflaeche = 'https://{s}.wien.gv.at/basemap/bmapoberflaeche/grau/google3857/{z}/{y}/{x}.jpeg';
-    var tilelayer_oberflaeche = L.tileLayer(url_oberflaeche, { maxZoom: 24, attribution: attrib, subdomains: ['maps1', 'maps2', 'maps3', 'maps4']});
+var links_geojson = {{ links|safe }};
+var nodes_geojson = {{ nodes|safe }};
 
-    var map = new L.Map('map_id', { center: defaultLatLng, zoom: 24, layers: [tilelayer_gelaende, tilelayer_standard, tilelayer_orthofoto, tilelayer_grau, tilelayer_oberflaeche]});
-
-    drawnItems = L.featureGroup().addTo(map);
-
-    const baseLayers = {
-        'Gelaende': tilelayer_gelaende,
-        'Oberflaeche': tilelayer_oberflaeche,
-        'Orthofoto': tilelayer_orthofoto,
-        'Standard': tilelayer_standard,
-        'Grau': tilelayer_grau,
-    };
-
-    const layerControl = L.control.layers(baseLayers).addTo(map);
-
-    let colors = {{ colors|safe }};
-
-    var links_geojson = {{ links|safe }};
-    var nodes_geojson = {{ nodes|safe }};
-
-    let links = L.geoJson(links_geojson, {
-        style: function(feature) {
-            let link_type = feature.properties.type;
-            return {
-                color: colors[link_type], // || '#000000'
-                weight: 2,
+let links = L.geoJson(links_geojson, {
+    style: function(feature) {
+        let link_type = feature.properties.type;
+        return {
+            color: colors[link_type], // || '#000000'
+            weight: 2,
+        }
+    },
+    onEachFeature: function(feature, layer) {
+        let content = '<div class="popup-content"><table class="table table-bordered table-striped">';
+        Object.keys(feature.properties).forEach(function(key) {
+            if (typeof feature.properties[key] === 'object') {
+                // handle nested object
+                content += '<tr><td colspan="2" class="font-weight-bold">' + key + ':</td></tr>';
+                Object.keys(feature.properties[key]).forEach(function(subkey) {
+                    content += '<tr><td class="font-weight-bold">' + subkey + ':</td><td>' + feature.properties[key][subkey] + '</td></tr>';
+                });
+            } else {
+                // handle regular property
+                content += '<tr><td class="font-weight-bold">' + key + ':</td><td>' + feature.properties[key] + '</td></tr>';
             }
-        },
-        onEachFeature: function(feature, layer) {
-            let content = '<table>';
-            Object.keys(feature.properties).forEach(function(key) {
-                if (typeof feature.properties[key] === 'object') {
-                    // handle nested object
-                    content += '<tr><td colspan="2"><b>' + key + ':</b></td></tr>';
-                    Object.keys(feature.properties[key]).forEach(function(subkey) {
-                        content += '<tr><td>' + subkey + ':</td><td>' + feature.properties[key][subkey] + '</td></tr>';
-                    });
-                } else {
-                    // handle regular property
-                    content += '<tr><td>' + key + ':</td><td>' + feature.properties[key] + '</td></tr>';
-                }
+        });
+        content += '</table></div>';
+        layer.bindPopup(content);
+    }
+});
+
+drawnItems.addLayer(links);
+
+let nodes = L.geoJson(nodes_geojson, {
+    pointToLayer: function (feature, latlng) {
+        let node_type = feature.properties.type;
+        return L.circleMarker(latlng, {
+            // Stroke properties
+            color: colors[node_type], // || '#000000'
+            opacity: 0.75,
+            weight: 5,
+
+            // Fill properties
+            fillColor: '#5EA4D4',
+            fillOpacity: 1.0,
+
+            radius: 3
+        });
+    },
+    onEachFeature: function(feature, layer) {
+        let content = '<div class="popup-content"><table class="table table-bordered table-striped">';
+        Object.keys(feature.properties).forEach(function(key) {
+            if (typeof feature.properties[key] === 'object') {
+                // handle nested object
+                content += '<tr><td colspan="2" class="font-weight-bold">' + key + ':</td></tr>';
+                Object.keys(feature.properties[key]).forEach(function(subkey) {
+                    content += '<tr><td class="font-weight-bold">' + subkey + ':</td><td>' + feature.properties[key][subkey] + '</td></tr>';
+                });
+            } else {
+                // handle regular property
+                content += '<tr><td class="font-weight-bold">' + key + ':</td><td>' + feature.properties[key] + '</td></tr>';
+            }
+        });
+        content += '</table></div>';
+        layer.bindPopup(content);
+    }
+});
+
+drawnItems.addLayer(nodes);
+
+map.fitBounds(drawnItems.getBounds());
+
+function gotoFeature() {
+    var featureId = document.getElementById('featureIdInput').value;
+    var feature = findFeatureById(featureId);
+
+    if (feature) {
+        if (feature instanceof L.Polyline) {
+            map.flyToBounds(feature.getBounds().pad(0.1), {
+                duration: 1,
+                maxZoom: 19,
             });
-            content += '</table>';
-            layer.bindPopup(content);
         }
-    });
-
-    drawnItems.addLayer(links);
-
-    let nodes = L.geoJson(nodes_geojson, {
-        pointToLayer: function (feature, latlng) {
-            let node_type = feature.properties.type;
-            return L.circleMarker(latlng, {
-                // Stroke properties
-                color: colors[node_type], // || '#000000'
-                opacity: 0.75,
-                weight: 5,
-
-                // Fill properties
-                fillColor: '#5EA4D4',
-                fillOpacity: 1.0,
-
-                radius: 3
+        else {
+            map.flyTo(feature.getLatLng(), 19, {
+                duration: 1,
+                maxZoom: 19,
             });
-        },
-        onEachFeature: function(feature, layer) {
-            let content = '<table>';
-            Object.keys(feature.properties).forEach(function(key) {
-                if (typeof feature.properties[key] === 'object') {
-                    // handle nested object
-                    content += '<tr><td colspan="2"><b>' + key + ':</b></td></tr>';
-                    Object.keys(feature.properties[key]).forEach(function(subkey) {
-                        content += '<tr><td>' + subkey + ':</td><td>' + feature.properties[key][subkey] + '</td></tr>';
-                    });
-                } else {
-                    // handle regular property
-                    content += '<tr><td>' + key + ':</td><td>' + feature.properties[key] + '</td></tr>';
-                }
-            });
-            content += '</table>';
-            layer.bindPopup(content);
         }
-    });
 
-    drawnItems.addLayer(nodes);
+        document.getElementById('status-line').innerHTML = '<p>Selected ID: ' + featureId + '</p>';
+        feature.openPopup();
+    } else {
+        document.getElementById('status-line').innerHTML = '<p>Feature not found</p>';
+    }
+}
 
-    map.fitBounds(drawnItems.getBounds());
+function findFeatureById(featureId) {
+    var layers = [links, nodes];
+
+    for (var i = 0; i < layers.length; i++) {
+        var layer = layers[i].getLayers();
+        for (var j = 0; j < layer.length; j++) {
+            if (layer[j].feature.properties.id === featureId) {
+                return layer[j];
+            }
+        }
+    }
+
+    return null;
+}
 
 </script>
 
