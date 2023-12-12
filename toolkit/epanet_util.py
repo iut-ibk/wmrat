@@ -1,5 +1,10 @@
 import itertools as it
+import random
 import string
+from shapely.geometry import Point, Polygon
+import networkx as nx
+import alphashape
+import geojson
 import collections as c
 import subprocess as sp
 from pyproj import Transformer
@@ -444,4 +449,88 @@ def graph_to_geojsons(epanet_nodes, epanet_edges, epanet_epsg_int):
     geojson_edges['features'] = features
 
     return True, (geojson_nodes, geojson_edges)
+
+def epanet_segments_via_valves(nodes, edges):
+    G = nx.Graph()
+    for node, node_info in nodes.items():
+        G.add_node(node, x=node_info['coords'][0][0], y=node_info['coords'][0][1])
+
+    valves = dict()
+    for edge_name, edge_info in edges.items():
+        if edge_info['type'] == 'VALVE':
+            valves[edge_name] = edge_info
+        else:
+            node1 = edge_info["node1"]
+            node2 = edge_info["node2"]
+            G.add_edge(node1, node2, name=edge_name)
+
+    connected_components = list(nx.connected_components(G))
+
+    segment_valves_map = {}
+    for i, segment in enumerate(connected_components):
+        segment_valves_map[i] = {
+            'nodes': segment,
+            'valves': set(),
+            'edges': set(),
+        }
+
+        for edge_name, edge_info in edges.items():
+            if edge_info['node1'] in segment or edge_info['node2'] in segment:
+                segment_valves_map[i]['edges'].add(edge_name)
+
+        for valve, valve_info in valves.items():
+            if valve_info['node1'] in segment or valve_info['node2'] in segment:
+                segment_valves_map[i]['valves'].add(valve)
+
+    return segment_valves_map
+
+def segments_to_geojson(segment_valves_map, edges_with_attributes, source_epsg):
+    trans = Transformer.from_crs(f'EPSG:{source_epsg}', 'EPSG:4326')
+
+    edge_features = []
+    valve_features = []
+    for segment_id, segment_info in segment_valves_map.items():
+        edges = segment_info['edges']
+        valves = segment_info['valves']
+
+        # pipes
+        multi_edges = []
+        for edge in edges:
+            edge_info = edges_with_attributes[edge]
+
+            edge_coords = []
+            for c0, c1 in edge_info['coords']:
+                trans_c1, trans_c0 = trans.transform(c1, c0)
+                edge_coords.append([trans_c0, trans_c1])
+
+            multi_edges.append(edge_coords)
+
+        feature = geojson.Feature(
+            geometry=geojson.MultiLineString(multi_edges),
+            properties={'segment_id': segment_id}
+        )
+        edge_features.append(feature)
+
+        # valves
+        multi_valves = []
+        for valve in valves:
+            valve_info = edges_with_attributes[valve]
+
+            valve_coords = []
+            for c0, c1 in valve_info['coords']:
+                trans_c1, trans_c0 = trans.transform(c1, c0)
+                valve_coords.append([trans_c0, trans_c1])
+
+            multi_valves.append(valve_coords)
+
+        feature = geojson.Feature(
+            geometry=geojson.MultiLineString(multi_valves),
+            properties={'segment_id': segment_id}
+        )
+        valve_features.append(feature)
+
+    edge_feature_collection = geojson.FeatureCollection(edge_features)
+    valve_feature_collection = geojson.FeatureCollection(valve_features)
+
+    return True, (edge_feature_collection, valve_feature_collection)
 

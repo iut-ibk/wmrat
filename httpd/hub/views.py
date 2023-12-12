@@ -440,9 +440,10 @@ def viz_segment_criticality(analysis, request):
     for segment_id, info in segment_results.items():
         if len(info['junctions_impacted']) > 0:
             segment_nodes = info['nodes']
-            results.append([segment_id, segment_nodes, len(info['junctions_impacted'])])
+            segment_edges = info['edges']
+            results.append([segment_id, len(info['junctions_impacted']), segment_edges])
 
-    results = sorted(results, key=lambda x: x[2], reverse=True)
+    results = sorted(results, key=lambda x: x[1], reverse=True)
 
     print(results)
 
@@ -912,7 +913,9 @@ def do_cancel(analysis):
         # kill process here (TODO: what if we don't find the pid?)
         # NOTE: we might not have the pid ... ?
         os.kill(analysis.proc_pid, signal.SIGKILL)
+        print('here')
     except Exception as e:
         #NOTE: what to do here?
+        #NOTE: probably here if not found (otherwise we don't kill and do.run() doesn't get the teardown?
         pass
 

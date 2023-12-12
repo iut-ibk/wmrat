@@ -122,8 +122,6 @@ drawnItems.addLayer(nodes);
 map.fitBounds(drawnItems.getBounds());
 
 function zoomToLinkFeatures(linkNames, clickedRow, hyd_failure) {
-    //console.log(typeof linkNames);
-
     document.querySelectorAll('.table-container tbody tr').forEach(function (row) {
         row.classList.remove('table-active');
     });

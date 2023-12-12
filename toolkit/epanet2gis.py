@@ -30,14 +30,31 @@ if not success:
     print(f'fatal: {val}', file=sys.stderr)
     sys.exit(1)
 
+nodes_geojson, links_geojson = val
+
+segment_valves_map = enu.epanet_segments_via_valves(nodes, links)
+
+#alpha = 0
+#success, val = enu.segments_to_alphashape_geojson(segment_valves_map, nodes, alpha, source_epsg)
+success, val = enu.segments_to_geojson(segment_valves_map, links, source_epsg)
+if not success:
+    print(f'fatal: {val}', file=sys.stderr)
+    sys.exit(1)
+
+segments_geojson, valves = val
+
 if not os.path.exists(target_dir):
     os.makedirs(target_dir)
-
-nodes_geojson, links_geojson = val
 
 with open(target_dir + '/nodes.geojson', 'w') as f:
     json.dump(nodes_geojson, f)
 
 with open(target_dir + '/links.geojson', 'w') as f:
     json.dump(links_geojson, f)
+
+with open(target_dir + '/segments.geojson', 'w') as f:
+    json.dump(segments_geojson, f)
+
+with open(target_dir + '/valves.geojson', 'w') as f:
+    json.dump(valves, f)
 

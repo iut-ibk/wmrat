@@ -42,44 +42,7 @@ def run(epanet_inp_path, param_dict, output_dir):
 
     nodes, edges = graph
 
-    #print('nodes', len(nodes))
-    #print('edges', len(edges))
-
-    G = nx.Graph()
-    for node, node_info in nodes.items():
-        G.add_node(node, x=node_info['coords'][0][0], y=node_info['coords'][0][1])
-
-    valves = dict()
-    for edge_name, edge_info in edges.items():
-        node1 = edge_info["node1"]
-        node2 = edge_info["node2"]
-
-        #XXX 
-        if edge_info['type'] != 'VALVE':
-            G.add_edge(node1, node2, name=edge_name)
-        else:
-            valves[edge_name] = edge_info
-
-    colors = cycle(plt.rcParams['axes.prop_cycle'].by_key()['color'])
-
-    connected_components = list(nx.connected_components(G))
-
-    node_colors = {}
-    for i, component in enumerate(connected_components):
-        color = next(colors)
-        for node in component:
-            node_colors[node] = color
-
-    segment_valves_map = {}
-    for i, segment in enumerate(connected_components):
-        segment_valves_map[i] = {
-            'nodes': segment,
-            'valves': set(),
-        }
-
-        for valve, valve_info in valves.items():
-            if valve_info['node1'] in segment or valve_info['node2'] in segment:
-                segment_valves_map[i]['valves'].add(valve)
+    segment_valves_map = enu.epanet_segments_via_valves(nodes, edges)
 
     # list -> set
     segment_valves_map_vlist = {}
@@ -87,18 +50,9 @@ def run(epanet_inp_path, param_dict, output_dir):
         entry = {
             'nodes': list(v['nodes']),
             'valves': list(v['valves']),
+            'edges': list(v['edges']),
         }
         segment_valves_map_vlist[k] = entry
-
-    #print(segment_valves_map_vlist)
-
-    num_subgraphs = len(list(nx.connected_components(G)))
-    #print('#connected components', num_subgraphs)
-    #print(len(segment_valves_map_vlist))
-
-    pos = {node: (attrs['coords'][0][0], attrs['coords'][0][1]) for node, attrs in nodes.items()}
-    nx.draw(G, pos, with_labels=False, font_weight='bold', node_size=10, node_color=[node_colors[node] for node in G.nodes])
-    plt.show()
 
     # Create a water network model
     wn = wntr.network.WaterNetworkModel(epanet_inp_path)
