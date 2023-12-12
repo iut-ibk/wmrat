@@ -2,84 +2,84 @@
 
 {% block content %}
 
-<!-- NOTE: this should go in <head> ... -->
-<meta http-equiv="refresh" content="5">
+<div class="container-fluid">
 
-<!-- main content -->
-<main class="container">
-    <div class="content">
+{% if page_obj %}
 
-        <!-- network archive list -->
-        {% if page_obj %}
+<div class="row">
 
-            <table class="table table-striped" style="margin-top: 32px;">
-                <thead>
-                    <tr>
-                        <th scope="col">ID</th>
-                        <th scope="col">Name</th>
-                        <th scope="col">Upload date</th>
-                        <th scope="col"></th>
-                        <th scope="col"></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for network in page_obj %}
-                    <tr>
-                        <!-- network meta information -->
-                        <td class="align-middle">{{ network.id }}</td>
-                        <td class="align-middle">{{ network.name }}</td>
-                        <td class="align-middle">{{ network.uploaded_at|date:"Y.m.d" }}</td>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th scope="col">ID</th>
+                <th scope="col">Name</th>
+                <th scope="col">Upload date</th>
+                <th scope="col"></th>
+                <th scope="col"></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for network in page_obj %}
+            <tr>
+                <!-- network meta information -->
+                <td class="align-middle">{{ network.id }}</td>
+                <td class="align-middle">{{ network.name }}</td>
+                <td class="align-middle">{{ network.uploaded_at|date:"Y.m.d" }}</td>
 
-                        <!-- explorer -->
-                        <td>
-                        <a class="btn btn-primary" href="network/{{network.id}}/explore" role="button"><i class="fas fa-circle-nodes"></i> explore</a>
-                        </td>
+                <!-- explorer -->
+                <td>
+                <a class="btn btn-primary" href="network/{{network.id}}/explore" role="button"><i class="fas fa-circle-nodes"></i> explore</a>
+                </td>
 
-                        <!-- download -->
-                        <td>
-                        <a class="btn btn-warning" href="network/{{network.id}}/export_gis" role="button"><i class="fas fa-circle-nodes"></i> download (GIS)</a>
-                        </td>
+                <!-- download -->
+                <td>
+                <a class="btn btn-warning" href="network/{{network.id}}/export_gis" role="button"><i class="fas fa-circle-nodes"></i> download (GIS)</a>
+                </td>
 
-                    </tr>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            </tr>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 
-            <div class="row">
+</div>
 
-               <nav aria-label="Page navigation example">
-                   <ul class="pagination pagination-sm justify-content-center">
-                       {% if page_obj.has_previous %}
-                       <li class="page-item"><a class="page-link" href="?p=1&{{query_str}}">1</a></li>
-                       <li class="page-item">
-                           <a class="page-link" href="?p={{page_obj.previous_page_number}}&{{query_str}}" aria-label="Previous"><span aria-hidden="true">&laquo; Previous</span></a>
-                       </li>
-                       {% endif %}
+<div class="row">
+<div class="col-md-12">
 
-                       <li class="page-item"><a class="page-link" href="?p={{ page_obj.number }}&{{query_str}}">{{ page_obj.number }}</a></li>
-
-                       {% if page_obj.has_next %}
-                       <li class="page-item">
-                       <a class="page-link" href="?p={{page_obj.next_page_number}}&{{query_str}}" aria-label="Next"><span aria-hidden="true">Next &raquo;</span></a>
-                       </li>
-                       <li class="page-item"><a class="page-link" href="?p={{ page_obj.paginator.num_pages }}&{{query_str}}">{{ page_obj.paginator.num_pages }}</a></li>
-                       {% endif %}
-                   </ul>
-               </nav>
-
-                <p style="text-align: center; font-size: 14px">{{page_obj.paginator.count}} network{% if page_obj.paginator.count > 1 %}s{% endif %}</p>
-
-                <div class="col-sm-4">
-                </div>
-
-            </div>
-
-        {% else %}
-            <p style="margin-top: 32px; text-align: center;">No networks. ☹️</p>
+<nav aria-label="Page navigation example">
+    <ul class="pagination pagination-sm justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item"><a class="page-link" href="?p=1&{{query_str}}">1</a></li>
+        <li class="page-item">
+            <a class="page-link" href="?p={{page_obj.previous_page_number}}&{{query_str}}" aria-label="Previous"><span aria-hidden="true">&laquo; Previous</span></a>
+        </li>
         {% endif %}
 
-    </div>
-</main>
+        <li class="page-item"><a class="page-link" href="?p={{ page_obj.number }}&{{query_str}}">{{ page_obj.number }}</a></li>
+
+        {% if page_obj.has_next %}
+        <li class="page-item">
+        <a class="page-link" href="?p={{page_obj.next_page_number}}&{{query_str}}" aria-label="Next"><span aria-hidden="true">Next &raquo;</span></a>
+        </li>
+        <li class="page-item"><a class="page-link" href="?p={{ page_obj.paginator.num_pages }}&{{query_str}}">{{ page_obj.paginator.num_pages }}</a></li>
+        {% endif %}
+    </ul>
+</nav>
+
+</div>
+</div>
+
+<div class="row">
+<div class="col-md-12">
+    <p style="text-align: center; font-size: 14px">{{page_obj.paginator.count}} network{% if page_obj.paginator.count > 1 %}s{% endif %}</p>
+</div>
+</div>
+
+{% else %}
+    <p style="margin-top: 32px; text-align: center;">No networks. ☹️</p>
+{% endif %}
+
+</div>
 
 {% endblock %}
