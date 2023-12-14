@@ -1,5 +1,6 @@
 import itertools as it
 import random
+import datetime as dt
 import string
 from shapely.geometry import Point, Polygon
 import networkx as nx
@@ -464,6 +465,7 @@ def epanet_segments_via_valves(nodes, edges):
             node2 = edge_info["node2"]
             G.add_edge(node1, node2, name=edge_name)
 
+    then = dt.datetime.now()
     connected_components = list(nx.connected_components(G))
 
     segment_valves_map = {}
@@ -481,6 +483,9 @@ def epanet_segments_via_valves(nodes, edges):
         for valve, valve_info in valves.items():
             if valve_info['node1'] in segment or valve_info['node2'] in segment:
                 segment_valves_map[i]['valves'].add(valve)
+
+    elapsed_time_s = (dt.datetime.now() - then).total_seconds()
+    print('finding components took', elapsed_time_s)
 
     return segment_valves_map
 

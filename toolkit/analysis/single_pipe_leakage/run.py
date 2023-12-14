@@ -302,11 +302,11 @@ def run(epanet_inp_path, param_dict, output_dir):
     #nx.draw_networkx_nodes(new_graph, pos_new, node_color='black', node_size=node_size)
     
     # Add color bar
-    sm = plt.cm.ScalarMappable(cmap=plt.cm.rainbow, norm=norm)  # Use 'rainbow' colormap for the color bar
-    sm.set_array([])
-    cbar = plt.colorbar(sm, label='Category from Excel Column 3')
+    #sm = plt.cm.ScalarMappable(cmap=plt.cm.rainbow, norm=norm)  # Use 'rainbow' colormap for the color bar
+    #sm.set_array([])
+    #cbar = plt.colorbar(sm, label='Category from Excel Column 3')
     
-    plt.title('Network Graph with Color-Coded Edges')
-    plt.show()
+    #plt.title('Network Graph with Color-Coded Edges')
+    #plt.show()
     
     return None, False

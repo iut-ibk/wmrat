@@ -367,6 +367,14 @@ def viz_single_pipe_leakage(analysis, request):
         csv_path = str(analysis_path) + '/' + str(new_results_name) + '/csvs/' + csv_path
         ll = pd.read_csv(csv_path, header=0).values.tolist()
 
+        then = dt.datetime.now()
+
+        ll = sorted(ll, key=lambda x: x[4])
+
+        elapsed_time_s = (dt.datetime.now() - then).total_seconds()
+
+        print(f'sorting took {elapsed_time_s}s')
+
         results[name] = ll
 
     #print(results)
