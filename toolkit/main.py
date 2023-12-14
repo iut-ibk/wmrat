@@ -10,6 +10,7 @@ import analysis.single_pipe_failure_epanet.run as single_pipe_failure_epanet
 import analysis.segment_criticality.run as segment_criticality
 import analysis.multi_pipe_failure_graph.run as multi_pipe_failure_graph
 import analysis.single_pipe_leakage.run as single_pipe_leakage
+import analysis.node_contamination_criticality.run as node_contamination_criticality
 
 if len(sys.argv) != 5:
     print(f'usage: {sys.argv[0]} <analysis-type> <epanet-input> <param-json> <outputdir>', file=sys.stderr)
@@ -39,6 +40,8 @@ elif analysis_type == 'single_pipe_leakage':
     run = single_pipe_leakage.run
 elif analysis_type == 'segment_criticality':
     run = segment_criticality.run
+elif analysis_type == 'node_contamination_criticality':
+    run = node_contamination_criticality.run
 else:
     print(f'error: no such analysis: {analysis_type}', file=sys.stderr)
     sys.exit(1)
