@@ -1,4 +1,19 @@
 {
+    "pretty": "Node contamination criticality",
     "params": {
+        "duration": {
+            "pretty": "Duration",
+            "type": "FLOAT"
+        },
+        "hyd_timestep": {
+            "pretty": "Hydraulic Timestep",
+            "type": "FLOAT"
+        }
+    },
+    "output": {
+        "wdn_type": "NODE",
+        "file_name": "junctions_impacted.json",
+        "pretty": "Junctions impacted by node contamination",
+        "property_name": "junctions_impacted"
     }
 }
