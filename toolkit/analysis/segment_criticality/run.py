@@ -2,7 +2,7 @@ from copy import deepcopy
 import sys
 import numpy as np
 from platform import node
-from turtle import clear, color
+#from turtle import clear, color
 import json
 from itertools import cycle
 import networkx as nx

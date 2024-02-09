@@ -1,7 +1,7 @@
 from copy import deepcopy
 import sys
 from platform import node
-from turtle import clear, color
+#from turtle import clear, color
 import json
 import networkx as nx
 import matplotlib.pyplot as plt
