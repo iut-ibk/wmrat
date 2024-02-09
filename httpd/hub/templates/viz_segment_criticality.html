@@ -10,14 +10,14 @@
                     <thead>
                         <tr>
                             <th scope="col">Segment ID</th>
-                            <th scope="col">Junctions impacted</th>
+                            <th scope="col">Demand not Fulfilled (l/s)</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for segment_id, junctions_impacted, edges in result %}
                         <tr>
                             <td>{{ segment_id }}</td>
-                            <td>{{ junctions_impacted }}</td>
+                            <td>{{ junctions_impacted|floatformat:2 }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>

@@ -56,14 +56,16 @@ def run(epanet_inp_path, param_dict, output_dir):
 
     # Create a water network model
     wn = wntr.network.WaterNetworkModel(epanet_inp_path)
-    
+
     # Simulation Options for criticality analysis
     analysis_end_time = param_dict['duration']
     wn.options.time.duration = analysis_end_time
-    wn.options.hydraulic.demand_model = "DD"
+    wn.options.hydraulic.demand_model = "PDD"
     wn.options.hydraulic.required_pressure = param_dict['required_pressure']
     wn.options.hydraulic.minimum_pressure = 0
-    
+
+    junction_names = wn.junction_name_list
+
     # Create a list of pipes with defined diameter to include in the analysis
     pipes = wn.query_link_attribute("diameter", np.greater_equal, param_dict['min_diameter'], link_type=wntr.network.model.Pipe)
     pipes = list(pipes.index)
@@ -74,7 +76,11 @@ def run(epanet_inp_path, param_dict, output_dir):
     
     # Run a preliminary simulation to determine if junctions drop below threshold during normal condition
     sim = wntr.sim.EpanetSimulator(wn)
-    results = sim.run_sim(file_prefix='segment_criticality_normal_tmp')
+    #results = sim.run_sim(file_prefix='segment_criticality_normal_tmp')
+
+    results = sim.run_sim()
+    total_demand = results.node['demand'][junction_names].sum(axis=1)
+    total_demand = total_demand[0]
     
     # Criticality analysis, closing valves for each simulation
     min_pressure = results.node['pressure'].loc[:,wn.junction_name_list].min()
@@ -86,39 +92,53 @@ def run(epanet_inp_path, param_dict, output_dir):
         print('valves: ', valves)
         print('---')
     
-        wn.reset_initial_values()
+        #wn.reset_initial_values()
+        wn_copied = copy.deepcopy(wn)
 
         for valve_name in valves:
-            valve = wn.get_link(valve_name)
-            act = wntr.network.controls.ControlAction(valve, "status", wntr.network.LinkStatus.Closed)
+            valve = wn_copied.get_link(valve_name).initial_status = 'CLOSED'
+            #act = wntr.network.controls.ControlAction(valve, "status", wntr.network.LinkStatus.Closed)
     
-            cond = wntr.network.controls.SimTimeCondition(wn, "=", "0:00:00")
-            ctrl = wntr.network.controls.Control(cond, act)
-            wn.add_control("close valve " + valve_name, ctrl)
+            #cond = wntr.network.controls.SimTimeCondition(wn, "=", "0:00:00")
+            #ctrl = wntr.network.controls.Control(cond, act)
+            #wn.add_control("close valve " + valve_name, ctrl)
     
-        sim = wntr.sim.EpanetSimulator(wn)
+        sim = wntr.sim.EpanetSimulator(wn_copied)
+
+        results = sim.run_sim()
+
+        # Calculate the total demand supplied during the simulation
+        demand_supplied_all = results.node['demand'][junction_names].sum(axis=1)
+        demand_supplied = demand_supplied_all[0]
+        Difference_demand = (total_demand-demand_supplied)*1000
+
+        name = f'wntr_{segment_id}.inp'
+        wntr.network.write_inpfile(wn_copied, name)
     
         try:
             results = sim.run_sim(file_prefix='segment_criticality_alt_tmp')
         except Exception as e:
             #XXX: maybe not save, but works for now: important: we *have* to reset state (to have clean simulation environment)
-            wn.remove_control("close valve " + valve_name)
-            for valve_name in valves:
-                wn.remove_control("close valve " + valve_name)
+            #wn.remove_control("close valve " + valve_name)
+            #for valve_name in valves:
+            #    wn.remove_control("close valve " + valve_name)
 
             print(f'something went wrong when running EPANET simulation, continue ... [segment = {segment_id}]', e)
             continue
     
         # Extract te number of juctions that dip below the min. pressure threshold
-        min_pressure = results.node["pressure"].loc[:, wn.junction_name_list].min()
+        min_pressure = results.node["pressure"].loc[:, wn_copied.junction_name_list].min()
         below_threshold = set(min_pressure[min_pressure < pressure_threshold_abnormal].index)
     
         # Remove the set of junctions that were below the pressure threshold during normal conditions
         junctions_impacted_set = below_threshold - below_threshold_normal_conditions
-        segment_valves_map_vlist[segment_id]['junctions_impacted'] = list(junctions_impacted_set)
+        
+        print('min_pressure', min_pressure)
+
+        segment_valves_map_vlist[segment_id]['junctions_impacted'] = Difference_demand
     
-        for valve_name in valves:
-            wn.remove_control("close valve " + valve_name)
+        #for valve_name in valves:
+        #    wn.remove_control("close valve " + valve_name)
     
     # write results with segment infos
     segment_json_path = output_dir + '/junctions_impacted.json'
