@@ -213,7 +213,7 @@ def viz_single_pipe_failure_graph(analysis, request):
         if ebcq_val > 0:
             link_info_list.append((link_name, ebcq_val))
 
-    link_info_list = sorted(link_info_list, key=lambda x: x[1], reverse=True)
+    link_info_list = sorted(link_info_list, key=lambda x: x[1])
 
     #XXX
     print('len; XXX: what if result less then #pipes? had rewrite', len(link_info_list))

@@ -92,6 +92,9 @@ def run(epanet_inp_path):
         
         list_keys_closed = []
 
+        # segment ids of valve_id
+        # then we know the segments (>= 2 "meistens sagt rahul"), and we highlight them in different colors
+
         # iteration over the segemnts
 
         for key, values in segment_valves_map_vlist.items():

@@ -92,7 +92,7 @@ def run(epanet_inp_path, param_dict, output_dir):
             valve = wn.get_link(valve_name)
             act = wntr.network.controls.ControlAction(valve, "status", wntr.network.LinkStatus.Closed)
     
-            cond = wntr.network.controls.SimTimeCondition(wn, "=", "24:00:00")
+            cond = wntr.network.controls.SimTimeCondition(wn, "=", "0:00:00")
             ctrl = wntr.network.controls.Control(cond, act)
             wn.add_control("close valve " + valve_name, ctrl)
     

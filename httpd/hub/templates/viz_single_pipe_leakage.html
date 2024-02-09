@@ -24,19 +24,17 @@
                                         <th scope="col">Tank volume (m^3)</th>
                                         <th scope="col">Leakage (l/s)</th>
                                         <th scope="col">Leakage (l/min)</th>
-                                        <th scope="col">Time to empty (min)</th>
-                                        <th scope="col">Result</th>
+                                        <th scope="col">Time (s) to empty 10m^3</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for a, b, c, d, e, f in value %}
                                         <tr>
                                             <td>{{ a }}</td>
-                                            <td>{{ b }}</td>
-                                            <td>{{ c }}</td>
-                                            <td>{{ d }}</td>
-                                            <td>{{ e }}</td>
-                                            <td>{{ f }}</td>
+                                            <td>{{ b|floatformat:2 }}</td>
+                                            <td>{{ c|floatformat:2 }}</td>
+                                            <td>{{ d|floatformat:2 }}</td>
+                                            <td>{{ e|floatformat:2 }}</td>
                                         </tr>
                                     {% endfor %}
                                 </tbody>
