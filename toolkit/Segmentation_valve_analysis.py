@@ -180,7 +180,7 @@ def run(epanet_inp_path):
 
     
     # Convert the dictionary to a DataFrame
-    df = pd.DataFrame(list(hydraulic_results.values()), index=hydraulic_results.keys(), columns=['Diff', 'Total_Percentage_Missed'])
+    df = pd.DataFrame(list(hydraulic_results.values()), index=hydraulic_results.keys(), columns=['Diff'])
 
     # Save the DataFrame to an Excel file
     df.to_excel('hydraulic_results.xlsx', index_label='Valve_ID')
