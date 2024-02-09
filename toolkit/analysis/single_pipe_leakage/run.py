@@ -94,7 +94,7 @@ def run(epanet_inp_path, param_dict, output_dir):
         tank_radius = tank.diameter / 2
         tank_height = tank.max_level 
         volume = calculate_volume_per_meter(tank_radius, tank_height)
-        tank_dimensions[i] = volume
+        tank_dimensions[i] = volume * 1000
     
     # Find the node object for 'HB_Kraken
     flow_results = {}
