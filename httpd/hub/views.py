@@ -498,6 +498,8 @@ def visualize_result(request, analysis_id):
         return viz_single_pipe_leakage(analysis, request)
     elif analysis_type == 'segment_criticality':
         return viz_segment_criticality(analysis, request)
+    elif analysis_type == 'valve_criticality':
+        return viz_valve_criticality(analysis, request)
     else:
         return HttpResponseServerError('no visualization for that type of analysis')
 

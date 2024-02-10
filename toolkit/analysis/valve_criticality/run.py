@@ -27,7 +27,7 @@ import pandas as pd  # For data manipulation (optional)
 
 import epanet_util as enu
 
-def run(epanet_inp_path):
+def run(epanet_inp_path, param_dict, output_dir):
     start_time = time.time()
 
     # segmentation program from uli
@@ -183,16 +183,12 @@ def run(epanet_inp_path):
 
     
     # Convert the dictionary to a DataFrame
-    df = pd.DataFrame(list(hydraulic_results.values()), index=hydraulic_results.keys(), columns=['Diff', 'Total_Percentage_Missed'])
+    df = pd.DataFrame(list(hydraulic_results.values()), index=hydraulic_results.keys(), columns=['Diff'])
 
     # Save the DataFrame to an Excel file
     df.to_excel('hydraulic_results.xlsx', index_label='Valve_ID')
 
+    return None, False
 
-    
-
-    
-# sending it into the function 
-
-original_epanet_file = '1.Schwaz_20230529.inp'
-run(original_epanet_file)
+#original_epanet_file = '1.Schwaz_20230529.inp'
+#run(original_epanet_file)
