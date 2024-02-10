@@ -170,8 +170,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const tableRows = document.querySelectorAll('.table-container tbody tr');
     tableRows.forEach(function (row, index) {
         row.addEventListener('click', function () {
-            let segment_id = row.querySelector('td:nth-child(1)').textContent;
-            let linkNames = result_json[index][2];
+            let valve_id = row.querySelector('td:nth-child(1)').textContent;
+            let segment_a = result_json[index][2];
             //console.log(linkNames)
             const n_impacted = row.querySelector('td:nth-child(2)').textContent;
             zoomTo(linkNames, row, n_impacted);

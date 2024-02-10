@@ -81,6 +81,8 @@ def run(epanet_inp_path, param_dict, output_dir):
     results = sim.run_sim()
     total_demand = results.node['demand'][junction_names].sum(axis=1)
     total_demand = total_demand[0]
+
+    total_demand_supplied_list = results.node['demand'][junction_names]
     
     # Criticality analysis, closing valves for each simulation
     min_pressure = results.node['pressure'].loc[:,wn.junction_name_list].min()
@@ -135,7 +137,39 @@ def run(epanet_inp_path, param_dict, output_dir):
         
         print('min_pressure', min_pressure)
 
-        segment_valves_map_vlist[segment_id]['junctions_impacted'] = Difference_demand
+        list_of_segment_nodes = segment_valves_map_vlist[segment_id]['nodes']
+
+        list_demand_direct_nodes = []
+
+        for items in list_of_segment_nodes:
+            node_info = wn.get_node(items)
+            if node_info.node_type == 'Junction':
+                if node_info.base_demand > 0:
+                    list_demand_direct_nodes.append(items)
+
+        demand_supplied_list = results.node['demand'][junction_names]
+
+        list_demand_failed = []
+
+        for junction, demand in total_demand_supplied_list.items():
+
+            demand_node_failed = demand[0] - demand_supplied_list[junction][0]
+
+            if (demand_node_failed > 0):
+                list_demand_failed.append(junction)
+
+        print(list_demand_failed)
+
+        # removing overlapping nodes to find the other isolated nodes
+        isolated_nodes = []
+        for item in list_demand_failed:
+            if item not in list_demand_direct_nodes:
+                isolated_nodes.append(item)
+
+        segment_valves_map_vlist[segment_id]['diff_demand'] = Difference_demand
+
+        segment_valves_map_vlist[segment_id]['direct'] = list_demand_direct_nodes
+        segment_valves_map_vlist[segment_id]['indirect'] = isolated_nodes
     
         #for valve_name in valves:
         #    wn.remove_control("close valve " + valve_name)

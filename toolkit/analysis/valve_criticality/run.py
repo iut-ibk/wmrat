@@ -74,7 +74,7 @@ def run(epanet_inp_path, param_dict, output_dir):
     wn.options.hydraulic.demand_model = 'PDD'
     wn.options.time.duration = 1
     sim = wntr.sim.EpanetSimulator(wn)
-    results = sim.run_sim()
+    results = sim.run_sim(file_prefix='valve_criticalit_a')
     total_demand = results.node['demand'][junction_names].sum(axis=1)
     total_demand = total_demand[0]
 
@@ -114,7 +114,7 @@ def run(epanet_inp_path, param_dict, output_dir):
         wn.options.hydraulic.demand_model = 'PDD'
         wn.options.time.duration = 1
         sim = wntr.sim.EpanetSimulator(wn)
-        results = sim.run_sim()
+        results = sim.run_sim(file_prefix='valve_criticalit_b')
 
         
         # Calculate the total demand supplied during the simulation
@@ -150,7 +150,7 @@ def run(epanet_inp_path, param_dict, output_dir):
         for items in flattened_list_segment_nodes:
             node_info = wn.get_node(items)
             if node_info.node_type == 'Junction':
-                if node_info.base_demand > 0.:
+                if node_info.base_demand > 0:
                     flattened_list_with_demands.append(items)
 
         # removing overlapping nodes to find the other indirect nodes
