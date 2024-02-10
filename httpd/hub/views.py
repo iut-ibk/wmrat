@@ -526,9 +526,11 @@ def viz_valve_criticality(analysis, request):
     for valve_id, info in valve_results.items():
         #if len(info['junctions_impacted']) > 0:
         #if info['junctions_impacted'] > 0:
-        segment_nodes = info['nodes']
-        segment_edges = info['edges']
-        results.append([valve_id, info['diff_demand'], segment_edges])
+        segment_a = info['segment_id_a']
+        segment_b = info['segment_id_b']
+        direct = info['direct_demand_nodes']
+        indirect = info['indirect_demand_nodes']
+        results.append([valve_id, info['diff_demand'], segment_a, segment_b, direct, indirect])
 
     #XXX: sort correct?
     results = sorted(results, key=lambda x: x[1], reverse=True)

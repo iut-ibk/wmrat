@@ -167,7 +167,7 @@ def run(epanet_inp_path, param_dict, output_dir):
             "diff_demand": Difference_demand,
             "segment_id_a": list_keys_closed[0],
             "segment_id_b": list_keys_closed[1] if len(list_keys_closed) == 2 else list_keys_closed[0],
-            "direct_nodes": flattened_list_with_demands,
+            "direct_demand_nodes": flattened_list_with_demands,
             "indirect_demand_nodes": indirect_nodes,
         }
 

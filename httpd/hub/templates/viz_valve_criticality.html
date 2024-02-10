@@ -14,7 +14,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for valve_id, diff in result %}
+                        {% for valve_id, diff, segment_a, segment_b, direct, undirect in result %}
                         <tr>
                             <td>{{ valve_id }}</td>
                             <td>{{ diff|floatformat:2 }}</td>
