@@ -190,5 +190,7 @@ def run(epanet_inp_path, param_dict, output_dir):
 
     return None, False
 
+# sending it into the function 
 #original_epanet_file = '1.Schwaz_20230529.inp'
 #run(original_epanet_file)
+
