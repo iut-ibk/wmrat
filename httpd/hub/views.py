@@ -481,6 +481,86 @@ def viz_segment_criticality(analysis, request):
 
     return render(request, 'viz_segment_criticality.html', context)
 
+
+def viz_valve_criticality(analysis, request):
+    network = analysis.wm_network
+
+    network_path = settings.WMRAT_NETWORK_DIR / str(network.id)
+
+    with open(network_path / 'gis' / 'links.geojson') as f:
+        geojson_links = json.load(f)
+
+    with open(network_path / 'gis' / 'nodes.geojson') as f:
+        geojson_nodes = json.load(f)
+
+    #TODO: hacky ... (we do that 2x)
+    analysis_path = settings.WMRAT_ANALYSIS_DIR / str(analysis.id)
+    new_results_name = f'{analysis.id}_{analysis.name}'.replace(' ', '_')
+
+    #print(geojson_links)
+
+    success, val = get_analyses_info_dict_with_defaults()
+    if not success:
+        err_str = val
+        return HttpResponseServerError(err_str)
+
+    analyses_info_all = val
+
+    #print(analyses_info_all)
+
+    analyses_info = analyses_info_all[analysis.analysis_type]
+
+    file_name = analyses_info['output']['file_name']
+    property_name = analyses_info['output']['property_name']
+
+    pretty_analysis_type = analyses_info['pretty']
+
+    pretty_output_name = analyses_info['output']['pretty']
+
+    #XXX: here different other stuff mostly same
+    json_path = analysis_path / new_results_name / 'out.json'
+    with open(json_path) as f:
+        valve_results  = json.load(f)
+
+    results = []
+    for valve_id, info in valve_results.items():
+        #if len(info['junctions_impacted']) > 0:
+        #if info['junctions_impacted'] > 0:
+        segment_nodes = info['nodes']
+        segment_edges = info['edges']
+        results.append([valve_id, info['diff_demand'], segment_edges])
+
+    #XXX: sort correct?
+    results = sorted(results, key=lambda x: x[1], reverse=True)
+
+    print(results)
+
+    #XXX: move somewhere else
+    colors = {
+        'PIPE': '#0000ff',
+        'PUMP': '#00ff00',
+        'VALVE': '#ff0000',
+        'JUNCTION': '#000099',
+        'RESERVOIR': '#990000',
+        'TANK': '#009900',
+    }
+
+    context = {
+        'default_color_ramp': ('#ff0000', '#00ff00'),
+        'page_title': 'Result', #TODO: better name
+        'links': geojson_links,
+        'nodes': geojson_nodes,
+        'analysis': analysis,
+        'colors': colors,
+        'pretty_analysis_type': pretty_analysis_type,
+        'network': network, #XXX?
+        'result': results,
+        'pretty_output_name': pretty_output_name,
+    }
+
+    return render(request, 'viz_valve_criticality.html', context)
+
+
 @login_required
 def visualize_result(request, analysis_id):
     analysis = get_object_or_404(Analysis, id=analysis_id)
