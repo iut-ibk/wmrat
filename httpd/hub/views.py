@@ -598,14 +598,32 @@ def import_network(request):
 
             nodes_geojson, links_geojson = val
 
+            seg_valves_map = enu.epanet_segments_via_valves(nodes, links)
+
+            success, val = enu.segments_to_geojson(seg_valves_map, links, epanet_epsg_code)
+            if not success:
+                return HttpResponseServerError(f'unable to get GeoJSON from segments')
+
+            edge_features, valve_features = val
+
             gis_dir = epanet_model_dir / 'gis'
             os.makedirs(gis_dir)
+
+            print('import test with segments: START')
 
             with open(gis_dir / 'nodes.geojson', 'w') as f:
                 json.dump(nodes_geojson, f)
 
             with open(gis_dir / 'links.geojson', 'w') as f:
                 json.dump(links_geojson, f)
+
+            with open(gis_dir / 'segments.geojson', 'w') as f:
+                json.dump(edge_features, f)
+
+            with open(gis_dir / 'valves.geojson', 'w') as f:
+                json.dump(valve_features, f)
+
+            print('import test with segments: END')
 
             #TODO: for debugging ...
             print('EPANET input file written', file=sys.stderr)
