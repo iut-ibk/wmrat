@@ -405,6 +405,8 @@ def viz_single_pipe_leakage(analysis, request):
     return render(request, 'viz_single_pipe_leakage.html', context)
 
 def viz_segment_criticality(analysis, request):
+    then = dt.datetime.now()
+
     network = analysis.wm_network
 
     network_path = settings.WMRAT_NETWORK_DIR / str(network.id)
@@ -450,11 +452,13 @@ def viz_segment_criticality(analysis, request):
         if info['diff_demand'] > 0:
             segment_nodes = info['nodes']
             segment_edges = info['edges']
-            results.append([segment_id, info['diff_demand'], segment_edges])
+            direct_nodes = info['direct']
+            indirect_nodes = info['indirect']
+            results.append([segment_id, info['diff_demand'], segment_edges, direct_nodes, indirect_nodes])
 
     results = sorted(results, key=lambda x: x[1], reverse=True)
 
-    print(results)
+    #print(results)
 
     #XXX: move somewhere else
     colors = {
@@ -478,6 +482,9 @@ def viz_segment_criticality(analysis, request):
         'result': results,
         'pretty_output_name': pretty_output_name,
     }
+
+    elapsed_time_s = (dt.datetime.now() - then).total_seconds()
+    print(f'py render took {elapsed_time_s}s')
 
     return render(request, 'viz_segment_criticality.html', context)
 
