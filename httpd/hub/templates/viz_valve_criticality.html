@@ -103,16 +103,14 @@
             });
 
             // Update status line
-            document.getElementById('status-line').innerText = `Demand not fulfilled: ${parseFloat(diff).toFixed(2)}. Nodes impacted: ${parseFloat(directNodes.length)} direct and ${parseFloat(indirectNodes.length)} indirect`;
+            document.getElementById('status-line').innerText = `Demand not fulfilled: ${parseFloat(diff).toFixed(2)} l/s. Nodes impacted: ${parseFloat(directNodes.length)} direct and ${parseFloat(indirectNodes.length)} indirect`;
 
             // Highlight the clicked row
             $('#result-table tbody tr').removeClass('table-active');
             $(this).addClass('table-active');
         });
     });
-</script>
 
-<script>
     let attrib = 'Datenquelle: <a href="https://basemap.at">basemap.at</a>';
 
     var url_grau = 'https://{s}.wien.gv.at/basemap/bmapgrau/normal/google3857/{z}/{y}/{x}.png';
