@@ -447,7 +447,7 @@ def viz_segment_criticality(analysis, request):
     results = []
     for segment_id, info in segment_results.items():
         #if len(info['junctions_impacted']) > 0:
-        if info['junctions_impacted'] > 0:
+        if info['diff_demand'] > 0:
             segment_nodes = info['nodes']
             segment_edges = info['edges']
             results.append([segment_id, info['diff_demand'], segment_edges])
