@@ -11,6 +11,8 @@
                         <tr>
                             <th scope="col">Valve ID</th>
                             <th scope="col">Demand not Fulfilled (l/s)</th>
+                            <th scope="col">#Nodes directly affected</th>
+                            <th scope="col">#Nodes indirectly affected</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -18,6 +20,8 @@
                         <tr>
                             <td>{{ valve_id }}</td>
                             <td>{{ diff|floatformat:2 }}</td>
+                            <td>{{ direct|length }}</td>
+                            <td>{{ indirect|length }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -36,7 +40,7 @@
             <button class="btn btn-warning">Download</button>
         </div>
         <div class="col-md-4 text-center" id="status-line">
-            <p>Click table entry to zoom to feature.</p>
+            <p>Click table entry to inspect valve criticality.</p>
         </div>
         <div class="col-md-4 text-right">
             <!-- TODO <button class="btn btn-primary">Change Style</button> -->
@@ -146,8 +150,6 @@ function zoomTo(seg_a, seg_b, directNodes, indirectNodes, clickedRow, diff) {
                 radius: 4
             });
 
-            document.getElementById('status-line').innerText = `Junctions impacted: ${parseFloat(diff)}`;
-
         } else if (indirectNodes.includes(layer.feature.properties.id)) {
             layer.setStyle({
                 color: color,
@@ -155,7 +157,6 @@ function zoomTo(seg_a, seg_b, directNodes, indirectNodes, clickedRow, diff) {
                 radius: 4
             });
 
-            document.getElementById('status-line').innerText = `Junctions impacted: ${parseFloat(diff)}`;
         } else {
             layer.setStyle({
                 color: colors[layer.feature.properties.type], // Use your original color logic here
@@ -175,9 +176,6 @@ function zoomTo(seg_a, seg_b, directNodes, indirectNodes, clickedRow, diff) {
             });
 
             bounds.extend(layer.getBounds().pad(0.1));
-
-            document.getElementById('status-line').innerText = `Junctions impacted: ${parseFloat(diff)}`;
-
         } else {
             layer.setStyle({
                 color: colors[layer.feature.properties.type], // Use your original color logic here
@@ -196,6 +194,8 @@ function zoomTo(seg_a, seg_b, directNodes, indirectNodes, clickedRow, diff) {
         maxZoom: 19,
     });
     */
+
+    document.getElementById('status-line').innerText = `Demand not fulfilled: ${parseFloat(diff)}. Nodes impacted: ${parseFloat(directNodes.length)} (direct), ${parseFloat(indirectNodes.length)} (indirect)`;
 
     clickedRow.classList.add('table-active');
 }
