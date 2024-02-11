@@ -14,7 +14,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for valve_id, diff, segment_a, segment_b, direct, undirect in result %}
+                        {% for valve_id, diff, seg_a, seg_b, direct, indirect in result %}
                         <tr>
                             <td>{{ valve_id }}</td>
                             <td>{{ diff|floatformat:2 }}</td>
@@ -89,8 +89,6 @@ let links = L.geoJson(links_geojson, {
     }
 });
 
-drawnItems.addLayer(links);
-
 let nodes = L.geoJson(nodes_geojson, {
     pointToLayer: function (feature, latlng) {
         let node_type = feature.properties.type;
@@ -98,13 +96,13 @@ let nodes = L.geoJson(nodes_geojson, {
             // Stroke properties
             color: colors[node_type], // || '#000000'
             opacity: 0.75,
-            weight: 5,
+            weight: 2,
 
             // Fill properties
             fillColor: '#5EA4D4',
             fillOpacity: 1.0,
 
-            radius: 3
+            radius: 2
         });
     },
     onEachFeature: function(feature, layer) {
@@ -127,10 +125,11 @@ let nodes = L.geoJson(nodes_geojson, {
 });
 
 drawnItems.addLayer(nodes);
+drawnItems.addLayer(links);
 
 map.fitBounds(drawnItems.getBounds());
 
-function zoomTo(linkNames, clickedRow, n_impacted) {
+function zoomTo(seg_a, seg_b, directNodes, indirectNodes, clickedRow, diff) {
     document.querySelectorAll('.table-container tbody tr').forEach(function (row) {
         row.classList.remove('table-active');
     });
@@ -139,16 +138,45 @@ function zoomTo(linkNames, clickedRow, n_impacted) {
 
     const color = 'darkorange'
 
-    links.eachLayer(function (layer) {
-        if (linkNames.includes(layer.feature.properties.id)) {
+    nodes.eachLayer(function (layer) {
+        if (directNodes.includes(layer.feature.properties.id)) {
+            layer.setStyle({
+                color: '#ff0000',
+                weight: 8,
+                radius: 4
+            });
+
+            document.getElementById('status-line').innerText = `Junctions impacted: ${parseFloat(diff)}`;
+
+        } else if (indirectNodes.includes(layer.feature.properties.id)) {
             layer.setStyle({
                 color: color,
+                weight: 8,
+                radius: 4
+            });
+
+            document.getElementById('status-line').innerText = `Junctions impacted: ${parseFloat(diff)}`;
+        } else {
+            layer.setStyle({
+                color: colors[layer.feature.properties.type], // Use your original color logic here
+                weight: 2,
+                radius: 2
+            });
+        }
+    });
+
+    /*
+    links.eachLayer(function (layer) {
+        if (seg_a.includes(layer.feature.properties.id)) {
+            layer.setStyle({
+                color: '#008800',
                 weight: 16,
+                opacity: 0.5,
             });
 
             bounds.extend(layer.getBounds().pad(0.1));
 
-            document.getElementById('status-line').innerText = `Junctions impacted: ${parseFloat(n_impacted)}`;
+            document.getElementById('status-line').innerText = `Junctions impacted: ${parseFloat(diff)}`;
 
         } else {
             layer.setStyle({
@@ -158,10 +186,16 @@ function zoomTo(linkNames, clickedRow, n_impacted) {
         }
     });
 
+    links.bringToFront();
+    */
+    nodes.bringToFront();
+
+    /*
     map.flyToBounds(bounds, {
         duration: 1,
         maxZoom: 19,
     });
+    */
 
     clickedRow.classList.add('table-active');
 }
@@ -171,10 +205,13 @@ document.addEventListener('DOMContentLoaded', function () {
     tableRows.forEach(function (row, index) {
         row.addEventListener('click', function () {
             let valve_id = row.querySelector('td:nth-child(1)').textContent;
-            let segment_a = result_json[index][2];
+            const diff = row.querySelector('td:nth-child(2)').textContent;
+            let seg_a = result_json[index][2];
+            let seg_b = result_json[index][3];
+            let directNodes = result_json[index][4];
+            let indirectNodes = result_json[index][5];
             //console.log(linkNames)
-            const n_impacted = row.querySelector('td:nth-child(2)').textContent;
-            zoomTo(linkNames, row, n_impacted);
+            zoomTo(seg_a, seg_b, directNodes, indirectNodes, row, diff);
         });
     });
 });
