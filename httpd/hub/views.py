@@ -967,6 +967,8 @@ def export_gis(request, network_id):
 def download_analysis(request, analysis_id):
     analysis = get_object_or_404(Analysis, id=analysis_id)
 
+    #XXX:
+
     analysis_path = settings.WMRAT_ANALYSIS_DIR / str(analysis.id)
 
     name = f'{analysis.id}_{analysis.name}.zip'.replace(' ', '_')

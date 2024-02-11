@@ -206,7 +206,7 @@ function zoomTo(seg_a, seg_b, directNodes, indirectNodes, clickedRow, diff) {
     });
     */
 
-    document.getElementById('status-line').innerText = `Demand not fulfilled: ${parseFloat(diff)}. Nodes impacted: ${parseFloat(directNodes.length)} direct and ${parseFloat(indirectNodes.length)} indirect`;
+    document.getElementById('status-line').innerText = `Demand not fulfilled: ${parseFloat(diff).toFixed(2)}. Nodes impacted: ${parseFloat(directNodes.length)} direct and ${parseFloat(indirectNodes.length)} indirect`;
 
     clickedRow.classList.add('table-active');
 }
