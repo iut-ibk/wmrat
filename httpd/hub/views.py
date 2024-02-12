@@ -289,13 +289,15 @@ def viz_multi_pipe_failure_graph(analysis, request):
 
     result_list = []
     for entry in result_json:
-        list_item = (
+        list_item = [
             entry['pipes'],
             int(entry['rank_G']),
             int(entry['rank_H']),
             entry['hyd_failure'],
-        )
+        ]
         result_list.append(list_item)
+
+    print(result_list)
 
     #XXX
     #print('len; XXX: what if result less then #pipes? had rewrite', len(link_info_list))
