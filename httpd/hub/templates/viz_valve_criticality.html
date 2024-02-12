@@ -62,7 +62,8 @@
 
         let table = $('#result-table').DataTable({
             "pageLength": 25,
-            "data": tableData
+            "data": tableData,
+            "order": [[1, 'desc']],
         });
 
         $('#result-table tbody').on('click', 'tr', function () {
