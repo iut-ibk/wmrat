@@ -135,9 +135,11 @@ def viz_single_pipe_failure_epanet(analysis, request):
     link_info_list = []
     for link_name, junctions_impacted in link_infos.items():
         if len(junctions_impacted) > 0:
-            link_info_list.append((link_name, len(junctions_impacted)))
+            link_info_list.append([link_name, junctions_impacted])
 
     link_info_list = sorted(link_info_list, key=lambda x: x[1], reverse=True)
+
+    print(link_info_list)
 
     #XXX
     print('len; XXX: what if result less then #pipes? had rewrite', len(link_info_list))

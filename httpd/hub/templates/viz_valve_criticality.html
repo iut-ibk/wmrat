@@ -50,7 +50,6 @@
         let result_json = {{ result|safe }};
         let tableData = [];
         
-        // Prepare the data for DataTable
         result_json.forEach(function(item) {
             let rowData = [
                 item[0],  // Valve ID
@@ -61,13 +60,11 @@
             tableData.push(rowData);
         });
 
-        // Initialize DataTable with the prepared data
         let table = $('#result-table').DataTable({
             "pageLength": 25,
             "data": tableData
         });
 
-        // Click event listener for rows
         $('#result-table tbody').on('click', 'tr', function () {
             let data = table.row(this).data();
             let index = table.row(this).index();
