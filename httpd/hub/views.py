@@ -462,7 +462,7 @@ def viz_segment_criticality(analysis, request):
 
     results = sorted(results, key=lambda x: x[1], reverse=True)
 
-    #print(results)
+    print(results)
 
     #XXX: move somewhere else
     colors = {
@@ -543,10 +543,11 @@ def viz_valve_criticality(analysis, request):
             indirect = info['indirect_demand_nodes']
             results.append([valve_id, info['diff_demand'], segment_a, segment_b, direct, indirect])
 
+            print(segment_a)
+
     #XXX: sort correct?
     results = sorted(results, key=lambda x: x[1], reverse=True)
 
-    print(results)
 
     #XXX: move somewhere else
     colors = {

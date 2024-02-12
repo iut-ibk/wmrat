@@ -100,6 +100,34 @@
                 }
             });
 
+            valveName = result_json[index][0];
+
+            links.eachLayer(function (layer) {
+                if (layer.feature.properties.id === valveName) {
+                    layer.setStyle({
+                        color: 'darkgreen',
+                        weight: 30,
+                    });
+        
+                    /*
+                    map.flyToBounds(layer.getBounds().pad(0.1), {
+                        duration: 1,
+                        maxZoom: 16,
+                    });
+                    */
+        
+                    layer.openPopup();
+                }
+                else {
+                    layer.setStyle({
+                        color: colors[layer.feature.properties.type],
+                        weight: 2, //XXX: original
+                    });
+                }
+            });
+
+
+
             // Update status line
             document.getElementById('status-line').innerText = `Demand not fulfilled: ${parseFloat(diff).toFixed(2)} l/s. Nodes impacted: ${parseFloat(directNodes.length)} direct and ${parseFloat(indirectNodes.length)} indirect`;
 
