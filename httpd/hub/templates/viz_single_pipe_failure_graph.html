@@ -6,7 +6,7 @@
     <div class="row">
         <div class="col-md-6 main-view">
             <div class="table-container">
-                <table class="table table-striped">
+                <table id="result-table" class="table table-striped">
                     <thead>
                         <tr>
                             <th scope="col">Pipe ID</th>
@@ -14,17 +14,10 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for pipe_id, ebcq_val in result %}
-                        <tr>
-                            <td>{{ pipe_id }}</td>
-                            <td>{{ ebcq_val }}</td>
-                        </tr>
-                        {% endfor %}
                     </tbody>
                 </table>
             </div>
         </div>
-
         <div class="col-md-6">
             <div id="map"></div>
         </div>
@@ -37,7 +30,7 @@
             <button class="btn btn-warning">Download</button>
         </div>
         <div class="col-md-4 text-center" id="status-line">
-            <p>Click table entry to zoom to feature.</p>
+            <p>Click table entry to inspect valve criticality.</p>
         </div>
         <div class="col-md-4 text-right">
             <!-- TODO <button class="btn btn-primary">Change Style</button> -->
@@ -45,136 +38,159 @@
     </div>
 </div>
 
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.css">
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css"/>
+
 <script>
+    $(document).ready(function() {
+        let result_json = {{ result|safe }};
+        let tableData = [];
+        
+        result_json.forEach(function(item) {
+            let rowData = [
+                item[0],
+                item[1],
+            ];
+            tableData.push(rowData);
+        });
 
-let attrib = 'Datenquelle: <a href="https://basemap.at">basemap.at</a>';
+        let table = $('#result-table').DataTable({
+            "pageLength": 25,
+            "data": tableData,
+            "order": [[1, 'asc']],
+        });
 
-var url_grau = 'https://{s}.wien.gv.at/basemap/bmapgrau/normal/google3857/{z}/{y}/{x}.png';
-var tilelayer_grau = L.tileLayer(url_grau, { maxZoom: 22, attribution: attrib, subdomains: ['maps1', 'maps2', 'maps3', 'maps4']});
+        $('#result-table tbody').on('click', 'tr', function () {
+            let data = table.row(this).data();
+            let index = table.row(this).index();
+            let ranking = result_json[index][1];
 
-var map = new L.Map('map', { zoom: 14, layers: [tilelayer_grau]});
-
-drawnItems = L.featureGroup().addTo(map);
-
-let colors = {{ colors|safe }};
-
-var links_geojson = {{ links|safe }};
-var nodes_geojson = {{ nodes|safe }};
-
-var result_json = {{ result|safe }};
-
-let links = L.geoJson(links_geojson, {
-    style: function(feature) {
-        let link_type = feature.properties.type;
-        return {
-            color: colors[link_type], // || '#000000'
-            weight: 2,
-        }
-    },
-    onEachFeature: function(feature, layer) {
-        let content = '<div class="popup-content"><table class="table table-bordered table-striped">';
-        Object.keys(feature.properties).forEach(function(key) {
-            if (typeof feature.properties[key] === 'object') {
-                // handle nested object
-                content += '<tr><td colspan="2" class="font-weight-bold">' + key + ':</td></tr>';
-                Object.keys(feature.properties[key]).forEach(function(subkey) {
-                    content += '<tr><td class="font-weight-bold">' + subkey + ':</td><td>' + feature.properties[key][subkey] + '</td></tr>';
+            // Reset styles for all nodes
+            nodes.eachLayer(function (layer) {
+                layer.setStyle({
+                    color: colors[layer.feature.properties.type],
+                    weight: 2,
+                    radius: 2
                 });
-            } else {
-                // handle regular property
-                content += '<tr><td class="font-weight-bold">' + key + ':</td><td>' + feature.properties[key] + '</td></tr>';
-            }
+            });
+
+            linkName = result_json[index][0];
+
+            links.eachLayer(function (layer) {
+                if (layer.feature.properties.id === linkName) {
+                    layer.setStyle({
+                        color: 'darkorange',
+                        weight: 16,
+                    });
+        
+                    map.flyToBounds(layer.getBounds().pad(0.1), {
+                        duration: 1,
+                        maxZoom: 16,
+                    });
+        
+                    //layer.openPopup();
+                }
+                else {
+                    layer.setStyle({
+                        color: colors[layer.feature.properties.type],
+                        weight: 2, //XXX: original
+                    });
+                }
+            });
+
+            // Update status line
+            document.getElementById('status-line').innerText = `Ranking: ${ranking}.`;
+
+            // Highlight the clicked row
+            $('#result-table tbody tr').removeClass('table-active');
+            $(this).addClass('table-active');
         });
-        content += '</table></div>';
-        layer.bindPopup(content);
-    }
-});
-
-drawnItems.addLayer(links);
-
-let nodes = L.geoJson(nodes_geojson, {
-    pointToLayer: function (feature, latlng) {
-        let node_type = feature.properties.type;
-        return L.circleMarker(latlng, {
-            // Stroke properties
-            color: colors[node_type], // || '#000000'
-            opacity: 0.75,
-            weight: 5,
-
-            // Fill properties
-            fillColor: '#5EA4D4',
-            fillOpacity: 1.0,
-
-            radius: 3
-        });
-    },
-    onEachFeature: function(feature, layer) {
-        let content = '<div class="popup-content"><table class="table table-bordered table-striped">';
-        Object.keys(feature.properties).forEach(function(key) {
-            if (typeof feature.properties[key] === 'object') {
-                // handle nested object
-                content += '<tr><td colspan="2" class="font-weight-bold">' + key + ':</td></tr>';
-                Object.keys(feature.properties[key]).forEach(function(subkey) {
-                    content += '<tr><td class="font-weight-bold">' + subkey + ':</td><td>' + feature.properties[key][subkey] + '</td></tr>';
-                });
-            } else {
-                // handle regular property
-                content += '<tr><td class="font-weight-bold">' + key + ':</td><td>' + feature.properties[key] + '</td></tr>';
-            }
-        });
-        content += '</table></div>';
-        layer.bindPopup(content);
-    }
-});
-
-drawnItems.addLayer(nodes);
-
-map.fitBounds(drawnItems.getBounds());
-
-function zoomToLinkFeature(linkName, clickedRow, ebcq) {
-    document.querySelectorAll('.table-container tbody tr').forEach(function (row) {
-        row.classList.remove('table-active');
     });
 
-    links.eachLayer(function (layer) {
-        if (layer.feature.properties.id === linkName) {
-            layer.setStyle({
-                color: 'darkorange',
-                weight: 16,
-            });
+    let attrib = 'Datenquelle: <a href="https://basemap.at">basemap.at</a>';
 
-            map.flyToBounds(layer.getBounds().pad(0.1), {
-                duration: 1,
-                maxZoom: 19,
-            });
+    var url_grau = 'https://{s}.wien.gv.at/basemap/bmapgrau/normal/google3857/{z}/{y}/{x}.png';
+    var tilelayer_grau = L.tileLayer(url_grau, { maxZoom: 22, attribution: attrib, subdomains: ['maps1', 'maps2', 'maps3', 'maps4']});
 
-            layer.openPopup();
+    var map = new L.Map('map', { zoom: 14, layers: [tilelayer_grau]});
 
-            document.getElementById('status-line').innerText = `Link ${linkName} has EBCQ value == ${ebcq}.`;
-        }
-        else {
-            layer.setStyle({
-                color: colors[layer.feature.properties.type],
-                weight: 2, //XXX: original
+    drawnItems = L.featureGroup().addTo(map);
+
+    let colors = {{ colors|safe }};
+
+    var links_geojson = {{ links|safe }};
+    var nodes_geojson = {{ nodes|safe }};
+
+    let links = L.geoJson(links_geojson, {
+        style: function(feature) {
+            let link_type = feature.properties.type;
+            return {
+                color: colors[link_type],
+                weight: 2,
+            }
+        },
+        onEachFeature: function(feature, layer) {
+            let content = '<div class="popup-content"><table class="table table-bordered table-striped">';
+            Object.keys(feature.properties).forEach(function(key) {
+                if (typeof feature.properties[key] === 'object') {
+                    // handle nested object
+                    content += '<tr><td colspan="2" class="font-weight-bold">' + key + ':</td></tr>';
+                    Object.keys(feature.properties[key]).forEach(function(subkey) {
+                        content += '<tr><td class="font-weight-bold">' + subkey + ':</td><td>' + feature.properties[key][subkey] + '</td></tr>';
+                    });
+                } else {
+                    // handle regular property
+                    content += '<tr><td class="font-weight-bold">' + key + ':</td><td>' + feature.properties[key] + '</td></tr>';
+                }
             });
+            content += '</table></div>';
+            layer.bindPopup(content);
         }
     });
 
-    clickedRow.classList.add('table-active');
-}
+    let nodes = L.geoJson(nodes_geojson, {
+        pointToLayer: function (feature, latlng) {
+            let node_type = feature.properties.type;
+            return L.circleMarker(latlng, {
+                // Stroke properties
+                color: colors[node_type],
+                opacity: 0.75,
+                weight: 2,
 
-document.addEventListener('DOMContentLoaded', function () {
-    const tableRows = document.querySelectorAll('.table-container tbody tr');
-    tableRows.forEach(function (row) {
-        row.addEventListener('click', function () {
-            const linkName = row.querySelector('td:nth-child(1)').textContent;
-            const ebcq = row.querySelector('td:nth-child(2)').textContent;
-            console.log(linkName);
-            zoomToLinkFeature(linkName, row, ebcq);
-        });
+                // Fill properties
+                fillColor: '#5EA4D4',
+                fillOpacity: 1.0,
+
+                radius: 2
+            });
+        },
+        onEachFeature: function(feature, layer) {
+            let content = '<div class="popup-content"><table class="table table-bordered table-striped">';
+            Object.keys(feature.properties).forEach(function(key) {
+                if (typeof feature.properties[key] === 'object') {
+                    // handle nested object
+                    content += '<tr><td colspan="2" class="font-weight-bold">' + key + ':</td></tr>';
+                    Object.keys(feature.properties[key]).forEach(function(subkey) {
+                        content += '<tr><td class="font-weight-bold">' + subkey + ':</td><td> ' + feature.properties[key][subkey] + '</td></tr>';
+                    });
+                } else {
+                    // handle regular property
+                    content += '<tr><td class="font-weight-bold">' + key + ':</td><td>' + feature.properties[key] + '</td></tr>';
+                }
+            });
+            content += '</table></div>';
+            layer.bindPopup(content);
+        }
     });
-});
+
+    drawnItems.addLayer(nodes);
+    drawnItems.addLayer(links);
+
+    map.fitBounds(drawnItems.getBounds());
 
 </script>
 
 {% endblock %}
+

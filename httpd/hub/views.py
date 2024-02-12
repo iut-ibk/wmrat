@@ -213,7 +213,7 @@ def viz_single_pipe_failure_graph(analysis, request):
     link_info_list = []
     for link_name, ebcq_val in link_infos.items():
         if ebcq_val > 0:
-            link_info_list.append((link_name, ebcq_val))
+            link_info_list.append([link_name, ebcq_val])
 
     link_info_list = sorted(link_info_list, key=lambda x: x[1])
 
