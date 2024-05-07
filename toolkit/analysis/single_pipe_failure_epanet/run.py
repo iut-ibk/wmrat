@@ -1,7 +1,6 @@
 import wntr
 import sys
 import numpy as np
-import matplotlib.pyplot as plt
 import json
 import os
 from scipy.stats import rankdata

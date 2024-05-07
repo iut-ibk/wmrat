@@ -11,7 +11,6 @@ import graph_editing
 import misc_light
 import openpyxl
 
-import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.colors import Normalize
 
@@ -283,20 +282,20 @@ def run(epanet_inp_path, param_dict, output_dir):
     bin_edges = np.unique(bin_edges)  # Make sure we have unique bin edges
     
     # Plot the original graph in black
-    plt.figure(figsize=(10, 6))
-    pos = nx.get_node_attributes(network_graph, 'pos')
+    #plt.figure(figsize=(10, 6))
+    #pos = nx.get_node_attributes(network_graph, 'pos')
     
-    nx.draw(network_graph, pos, node_color='black', node_size = 0.001, edge_color='lightgrey', width=1, with_labels=False, font_weight='bold')
+    #nx.draw(network_graph, pos, node_color='black', node_size = 0.001, edge_color='lightgrey', width=1, with_labels=False, font_weight='bold')
     
     # Plot the new graph with color-coded edges based on different ranges and reduced node size
-    pos_new = nx.get_node_attributes(new_graph, 'pos')
-    node_size = 0.1  # Set the node size to a smaller value
-    norm = Normalize(vmin=min(bin_edges), vmax=max(bin_edges))
-    for edge in new_graph.edges(data=True):
+    #pos_new = nx.get_node_attributes(new_graph, 'pos')
+    #node_size = 0.1  # Set the node size to a smaller value
+    #norm = Normalize(vmin=min(bin_edges), vmax=max(bin_edges))
+    #for edge in new_graph.edges(data=True):
         source, target, data = edge
         category = data.get('category', 0)
         color = plt.cm.rainbow(norm(category)) # Map the 'category' value to a color based on the colormap
-        nx.draw_networkx_edges(new_graph, pos_new, edgelist=[(source, target)], edge_color=color, width=4)
+    #    nx.draw_networkx_edges(new_graph, pos_new, edgelist=[(source, target)], edge_color=color, width=4)
     
     # Draw the nodes with reduced size
     #nx.draw_networkx_nodes(new_graph, pos_new, node_color='black', node_size=node_size)
