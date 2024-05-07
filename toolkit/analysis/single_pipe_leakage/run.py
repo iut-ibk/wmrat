@@ -292,9 +292,9 @@ def run(epanet_inp_path, param_dict, output_dir):
     #node_size = 0.1  # Set the node size to a smaller value
     #norm = Normalize(vmin=min(bin_edges), vmax=max(bin_edges))
     #for edge in new_graph.edges(data=True):
-        source, target, data = edge
-        category = data.get('category', 0)
-        color = plt.cm.rainbow(norm(category)) # Map the 'category' value to a color based on the colormap
+    #    source, target, data = edge
+    #    category = data.get('category', 0)
+    #    color = plt.cm.rainbow(norm(category)) # Map the 'category' value to a color based on the colormap
     #    nx.draw_networkx_edges(new_graph, pos_new, edgelist=[(source, target)], edge_color=color, width=4)
     
     # Draw the nodes with reduced size
