@@ -450,10 +450,12 @@ def viz_segment_criticality(analysis, request):
     with open(json_path) as f:
         segment_results  = json.load(f)
 
+    epsilon = 0.001
+
     results = []
     for segment_id, info in segment_results.items():
         #if len(info['junctions_impacted']) > 0:
-        if info['diff_demand'] > 0:
+        if info['diff_demand'] > epsilon:
             segment_nodes = info['nodes']
             segment_edges = info['edges']
             direct_nodes = info['direct']
@@ -538,10 +540,12 @@ def viz_valve_criticality(analysis, request):
     with open(json_path) as f:
         valve_results  = json.load(f)
 
+    epsilon = 0.001
+
     results = []
     for valve_id, info in valve_results.items():
         #if len(info['junctions_impacted']) > 0:
-        if info['diff_demand'] > 0.01:
+        if info['diff_demand'] > epsilon:
             segment_a = info['segment_id_a']
             segment_b = info['segment_id_b']
             direct = info['direct_demand_nodes']

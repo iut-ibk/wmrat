@@ -3,8 +3,6 @@
 # Related files: EBCQ_functions.py, graph_editing.py, misc_light.py
 
 import networkx as nx
-import matplotlib.pyplot as plt
-import matplotlib as mpl
 import pandas as pd
 import math
 import copy

@@ -4,8 +4,6 @@ from platform import node
 #from turtle import clear, color
 import json
 import networkx as nx
-import matplotlib.pyplot as plt
-import matplotlib as mpl
 import pandas as pd
 from matplotlib import cm
 import math
@@ -93,7 +91,7 @@ def run(epanet_inp_path, param_dict, output_dir):
         d['EBCQ']
     
     edges,weights = zip(*nx.get_edge_attributes(network_graph,'EBCQ').items())
-    cmap = mpl.colormaps['jet'] 
+    #cmap = mpl.colormaps['jet'] 
     
     # Calculating and rescaling edge width
     N = list(dict.values(L))
@@ -192,7 +190,7 @@ def run(epanet_inp_path, param_dict, output_dir):
         d['Failure_EBCQ'] 
     
     edges, weights = zip(*nx.get_edge_attributes(network_graph_2,'Failure_EBCQ').items())
-    cmap = mpl.colormaps['jet']
+    #cmap = mpl.colormaps['jet']
     
     # Plotting new graph 
     Failure_EBCQ.update((key, round(val, 3)) for key, val in Failure_EBCQ.items())

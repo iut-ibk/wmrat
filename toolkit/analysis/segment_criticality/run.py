@@ -6,8 +6,6 @@ from platform import node
 import json
 from itertools import cycle
 import networkx as nx
-import matplotlib.pyplot as plt
-import matplotlib as mpl
 import pandas as pd
 from matplotlib import cm
 import math
