@@ -504,6 +504,11 @@ def viz_valve_criticality(analysis, request):
     with open(network_path / 'gis' / 'nodes.geojson') as f:
         geojson_nodes = json.load(f)
 
+    with open(network_path / 'gis' / 'segments.geojson') as f:
+        geojson_segments = json.load(f)
+
+    print(len(geojson_segments['features']))
+
     #TODO: hacky ... (we do that 2x)
     analysis_path = settings.WMRAT_ANALYSIS_DIR / str(analysis.id)
     new_results_name = f'{analysis.id}_{analysis.name}'.replace(' ', '_')
