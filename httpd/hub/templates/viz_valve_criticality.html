@@ -53,7 +53,7 @@
         result_json.forEach(function(item) {
             let rowData = [
                 item[0],  // Valve ID
-                parseFloat(item[1]).toFixed(2),  // Demand not Fulfilled
+                parseFloat(item[1]).toFixed(4),  // Demand not Fulfilled
                 item[4].length,  // #Nodes directly affected
                 item[5].length   // #Nodes indirectly affected
             ];
