@@ -681,7 +681,7 @@ def import_network(request):
 
             success, val = enu.epanet_inp_read(epanet_model_path)
             if not success:
-                return HttpResponseBadRequest(f'unable to parse EPANET input file')
+                return HttpResponseBadRequest(f'unable to parse EPANET input file: {val}')
 
             epanet_dict = val
 

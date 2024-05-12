@@ -170,6 +170,9 @@ def epanet_inp_read(path):
     if data:
         inp[name] = data
 
+    if 'VERTICES' not in inp or len(inp['VERTICES']) == 0:
+        return False, 'Incomplete vertices section.'
+
     return True, inp
 
 def epanet_inp_preprocess(lines):

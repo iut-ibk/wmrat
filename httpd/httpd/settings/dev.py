@@ -6,7 +6,7 @@ SECRET_KEY = 'very secret ...'
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost:8000', '127.0.0.1']
 
 home = str(Path.home())
 
