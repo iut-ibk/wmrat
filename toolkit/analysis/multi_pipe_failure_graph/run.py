@@ -120,7 +120,7 @@ def run(epanet_inp_path, param_dict, output_dir):
         
             Failure_EBCQ_multiple = dict.fromkeys(selected_combinations, 0) #list(map(dict, itertools.combinations(L.items(), 2)))
         
-            Failure_EBCQ_multiple = EBCQ_functions_Jilin.Failure_EBCQ_multiple(EBCQ_normal, EBCQ_normal_R, network_graph, K, Failure_EBCQ_multiple, C_max)
+            Failure_EBCQ_multiple = EBCQ_functions_Jilin.Failure_EBCQ_multiple(EBCQ_normal, EBCQ_normal_R, network_graph, K, Failure_EBCQ_multiple, C_max, param_dict['source'])
         
             #end_time_G = time.time()
         

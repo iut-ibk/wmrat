@@ -53,7 +53,7 @@ def EBCQ_dynamic(U, V, network_graph_dynamic, max_demand):
 
 # Failure EBCQ multiple
 
-def Failure_EBCQ_multiple(EBCQ_normal, EBCQ_normal_R, network_graph, K, Failure_EBCQ_multiple, C_max):
+def Failure_EBCQ_multiple(EBCQ_normal, EBCQ_normal_R, network_graph, K, Failure_EBCQ_multiple, C_max, source):
     i = 0
     
     for edges in Failure_EBCQ_multiple:
@@ -91,10 +91,10 @@ def Failure_EBCQ_multiple(EBCQ_normal, EBCQ_normal_R, network_graph, K, Failure_
 
         for c in sorted(nx.connected_components(network_graph_2), key=len, reverse=True):
             network_graph_3 = network_graph_2.subgraph(c).copy()
-            if 'HB_Kraken' in c:
+            if source in c:
                 L1 = dict()
                 L1.update(dict.fromkeys(network_graph_3.edges(), 0.0))
-                SP_abnormal = nx.multi_source_dijkstra_path(network_graph_3, sources={'HB_Kraken'}, weight='Wei')
+                SP_abnormal = nx.multi_source_dijkstra_path(network_graph_3, sources={source}, weight='Wei')
                 demands = nx.get_node_attributes(network_graph_3, 'demand')
                 EBCQ_abnormal = EBCQ(SP_abnormal, L1, demands)                                                         # same as EBCQ but under abnormal conditions
 
@@ -121,7 +121,7 @@ def Failure_EBCQ_multiple(EBCQ_normal, EBCQ_normal_R, network_graph, K, Failure_
             else:
 
                 #reachable_nodes = nx.descendants(network_graph_2, '28') | {'28'}
-                reachable_nodes = nx.descendants(network_graph_2, 'HB_Kraken') | {'HB_Kraken'}
+                reachable_nodes = nx.descendants(network_graph_2, source) | {source}
 
                 reachable_graph = nx.subgraph(network_graph, reachable_nodes)
 
@@ -145,7 +145,7 @@ def Failure_EBCQ_multiple(EBCQ_normal, EBCQ_normal_R, network_graph, K, Failure_
             
             
 
-                    if node == 'HB_Kraken':
+                    if node == source:
 
                          continue
 
@@ -159,7 +159,7 @@ def Failure_EBCQ_multiple(EBCQ_normal, EBCQ_normal_R, network_graph, K, Failure_
                 L1 = dict()
                 L1.update(dict.fromkeys(network_graph_3.edges(), 0.0))
 
-                source_node = 'HB_Kraken'
+                source_node = source
 
                 # Check if the source node exists in the graph
                 if source_node in network_graph_3.nodes():

@@ -10,9 +10,6 @@
         ["default", "", ""]
     ],
     "outflow_map": [
-        ["6154", "HB_Kraken"],
-        ["6163", "HB_Pertrach"],
-        ["1730", "HB_Pirchanger"],
-        ["6139", "HB_Schmadl"]
+        ["1086_b", "TANK_1"]
     ]
 }
