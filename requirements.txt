@@ -35,3 +35,4 @@ typing_extensions==4.9.0
 tzdata==2023.3
 wntr==1.1.0
 XlsxWriter==3.1.9
+setuptools==71.1.0
