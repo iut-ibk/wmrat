@@ -164,11 +164,11 @@ def run(epanet_inp_path, param_dict, output_dir):
     
                          if (m310_leak > tank_dimensions[tank]):
                               m310_leak = (tank_dimensions[tank]/diff_flow)
-                              negative_outflow_kraken[u] = [pipe_id, tank_dimensions[tank] / 1000, tank_dimensions[tank], diff_flow, leak_1min, m310_leak, 'tank empty']
+                              negative_outflow_kraken[u] = [pipe_id, tank, tank_dimensions[tank], diff_flow, leak_1min, m310_leak, 'tank empty']
                               u = u +1
     
                          else:
-                              negative_outflow_kraken[u] = [pipe_id, tank_dimensions[tank] / 1000, tank_dimensions[tank], diff_flow, leak_1min, m310_leak, '10 cubic meters empty']
+                              negative_outflow_kraken[u] = [pipe_id, tank, tank_dimensions[tank], diff_flow, leak_1min, m310_leak, '10 cubic meters empty']
                               u = u +1
     
         wn = wntr.network.WaterNetworkModel(inp_file)
