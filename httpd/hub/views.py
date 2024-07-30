@@ -995,6 +995,24 @@ def download_analysis(request, analysis_id):
     return resp
 
 @login_required
+def delete_network(request, network_id):
+    network = get_object_or_404(WMNetwork, id=network_id)
+
+    #XXX
+    #if network.user.id != request.user.id:
+    #    return HttpResponseForbidden('Forbidden')
+
+    network.delete()
+
+    network_path = settings.WMRAT_NETWORK_DIR / str(network_id)
+
+    # should exist, but check anyway
+    if os.path.exists(network_path):
+        shutil.rmtree(network_path)
+
+    return HttpResponseRedirect(reverse('epanet_archive', args=()))
+
+@login_required
 def delete(request, analysis_id):
     scnenario = get_object_or_404(Analysis, id=analysis_id)
 

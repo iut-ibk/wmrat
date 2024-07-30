@@ -16,6 +16,7 @@
                 <th scope="col">Upload date</th>
                 <th scope="col"></th>
                 <th scope="col"></th>
+                <th scope="col"></th>
             </tr>
         </thead>
         <tbody>
@@ -28,14 +29,25 @@
 
                 <!-- explorer -->
                 <td>
-                <a class="btn btn-primary" href="network/{{network.id}}/explore" role="button"><i class="fas fa-circle-nodes"></i> explore</a>
+                <a class="btn btn-primary btn-sm" href="network/{{network.id}}/explore" role="button"><i class="fas fa-circle-nodes"></i> explore</a>
                 </td>
 
                 <!-- download -->
                 <td>
-                <a class="btn btn-warning" href="network/{{network.id}}/export_gis" role="button"><i class="fas fa-circle-nodes"></i> download (GIS)</a>
+                <a class="btn btn-warning btn-sm" href="network/{{network.id}}/export_gis" role="button"><i class="fas fa-circle-nodes"></i> download (GIS)</a>
                 </td>
 
+                <!-- XXX -->
+                <td>
+                <!--
+                {% if user.id == network.user.id or user.is_superuser %}
+                -->
+                <form method="post" action=" {% url 'delete_network' network_id=network.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-warning btn-sm"><i class="fas fa-trash-can"></i> delete</button>
+                </form>
+                {% endif %}
+                </td>
             </tr>
             </tr>
             {% endfor %}

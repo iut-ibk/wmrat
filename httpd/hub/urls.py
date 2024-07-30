@@ -35,6 +35,9 @@ urlpatterns = [
     # delete analysis
     path('analysis/<int:analysis_id>/delete', views.delete, name='delete'),
 
+    # delete network
+    path('network/<int:network_id>/delete', views.delete_network, name='delete_network'),
+
     # cancel analysis
     path('analysis/<int:analysis_id>/cancel', views.cancel, name='cancel'),
 

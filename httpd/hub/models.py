@@ -17,6 +17,9 @@ class WMNetwork(models.Model):
     # optional parameter data
     opt_param = models.JSONField()
 
+    #XXX:
+    # user also here
+
     # upload date
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
