@@ -16,17 +16,17 @@ from matplotlib.colors import Normalize
 
 def run(epanet_inp_path, param_dict, output_dir):
     area_dict = {
-        'c': [10, 10, 25, None, 25, None, None],
-        'l': [40, 40, 40, None, 40, None, None],
-        'r': [None, None, None, 15, 15, 15, 50],
-        'j': [None, None, 15, 15, 15, 5, 5]
+        'c': [10, 10, 25, 0, 25, 0, 0],
+        'l': [40, 40, 40, 0, 40, 0, 0],
+        'r': [0, 0, 0, 15, 15, 15, 50],
+        'j': [0, 0, 15, 15, 15, 5, 5]
     }
     
     exponent_data = {
-        'c': [0.5, 0.5, 0.5, None, 0.5, None, None],
-        'l': [15, 1.5, 0.9, None, 0.85, None, None],
-        'r': [None, None, None, 1.5, 1.5, 1.5, 1.5],
-        'j': [None, None, 1, 1, 1, 1, 1]
+        'c': [0.5, 0.5, 0.5, 0, 0.5, 0, 0],
+        'l': [15, 1.5, 0.9, 0, 0.85, 0, 0],
+        'r': [0, 0, 0, 1.5, 1.5, 1.5, 1.5],
+        'j': [0, 0, 1, 1, 1, 1, 1]
     }
     
     #list_material = ['PE', 'PVC', 'Asbestos-cement', 'Concrete', 'GUSS', 'GGGUSS', 'STZ']
