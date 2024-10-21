@@ -31,8 +31,8 @@ def run(epanet_inp_path, param_dict, output_dir):
     #plt.show()
     
     # Define pressure threshold
-    pressure_threshold = param_dict['pressure_threshold'] # usually same as pt_abnormal
-    pressure_threshold_abnormal = param_dict['pressure_threshold_abnormal'] # usually same as pt_normal, but always pt_normal >= pt_abnormal
+    pressure_threshold = param_dict['required_pressure'] # usually same as pt_abnormal
+    pressure_threshold_abnormal = param_dict['required_pressure'] # usually same as pt_normal, but always pt_normal >= pt_abnormal
     
     # Run a preliminary simulation to determine if junctions drop below threshold during normal condition
     sim = wntr.sim.EpanetSimulator(wn)
