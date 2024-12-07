@@ -1,27 +1,6 @@
 {
     "pretty": "Valve criticality",
-    "params": {
-        "duration": {
-            "pretty": "Duration",
-            "type": "FLOAT"
-        },
-        "required_pressure": {
-            "pretty": "Required pressure",
-            "type": "FLOAT"
-        },
-        "min_diameter": {
-            "pretty": "Min. diameter",
-            "type": "FLOAT"
-        },
-        "pressure_threshold": {
-            "pretty": "Pressure threshold",
-            "type": "FLOAT"
-        },
-        "pressure_threshold_abnormal": {
-            "pretty": "Pressure threshold (abnormal)",
-            "type": "FLOAT"
-        }
-    },
+    "params": {},
     "output": {
         "wdn_type": "LINK",
         "file_name": "junctions_impacted.json",

@@ -5,23 +5,13 @@ class WMRatUser(AbstractUser):
     pass
 
 class WMNetwork(models.Model):
-    # name
     name = models.CharField(max_length=64)
 
-    # EPANET input data
-    # TODO: filefield, charfield?
-    # epanet_data = models.CharField(max_length=500000000)
+    user = models.ForeignKey(WMRatUser, on_delete=models.CASCADE)
 
-    #NOTE: or: epanet_data = models.FileField(upload_to='networks')
-
-    # optional parameter data
-    opt_param = models.JSONField()
-
-    #XXX:
-    # user also here
-
-    # upload date
     uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    epsg_code = models.IntegerField()
 
 class Analysis(models.Model):
     # analysis name

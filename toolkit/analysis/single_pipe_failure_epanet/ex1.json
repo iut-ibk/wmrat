@@ -1,7 +1,5 @@
 {
     "duration": 0,
     "required_pressure": 35.00,
-    "min_diameter": 0.001,
-    "pressure_threshold": 11,
-    "pressure_threshold_abnormal": 11
+    "min_diameter": 0.001
 }

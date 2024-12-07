@@ -24,6 +24,7 @@ import time
 import pandas as pd
 import sys
 import numpy as np
+from pyproj import CRS
 import signal
 
 from hub.models import Analysis, WMNetwork
@@ -656,15 +657,21 @@ def import_network(request):
         form = EPANETUploadFileForm(request.POST, request.FILES)
         if form.is_valid(): #XXX: when exactlcy not valid?
             epanet_file = request.FILES['epanet_file']
+            epanet_epsg_str = request.POST.get('id_epsg')
+
+            try:
+                epanet_epsg = int(epanet_epsg_str)
+                crs = CRS.from_epsg(epanet_epsg)
+            except Exception as e:
+                return HttpResponseBadRequest(f'invalid EPSG: {epanet_epsg_str}')
 
             #TODO: parse it (so we try to don't import incorrect files)
             epanet_model_name = request.POST.get('epanet_model_name') #TODO: do we need it the 'forms.py'?
 
-            #TODO: maybe add/save later to DB (first errors and look for errors)
             network = WMNetwork(
                 name=epanet_model_name,
-                #epanet_data='empty',
-                opt_param={},
+                user=request.user,
+                epsg_code=epanet_epsg,
             )
 
             network.save()
@@ -687,15 +694,12 @@ def import_network(request):
 
             #TODO: run it here => 1) have input sanity check 2) could provide results in explore
 
-            #XXX: do not hard-code this ... when importing demand it from the user?
-            epanet_epsg_code = 31254
-
             success, val = enu.epanet_to_graph(epanet_dict)
             if not success:
                 return HttpResponseServerError(f'unable to build graph from EPANET input')
 
             nodes, links = val
-            success, val = enu.graph_to_geojsons(nodes, links, epanet_epsg_code)
+            success, val = enu.graph_to_geojsons(nodes, links, epanet_epsg)
             if not success:
                 return HttpResponseServerError(f'unable to get GeoJSON strings from EPANET input')
 
@@ -703,7 +707,7 @@ def import_network(request):
 
             seg_valves_map = enu.epanet_segments_via_valves(nodes, links)
 
-            success, val = enu.segments_to_geojson(seg_valves_map, links, epanet_epsg_code)
+            success, val = enu.segments_to_geojson(seg_valves_map, links, epanet_epsg)
             if not success:
                 return HttpResponseServerError(f'unable to get GeoJSON from segments')
 
@@ -827,6 +831,10 @@ def new(request):
             elif param_val['type'] == 'INT':
                 try:
                     val = int(submitted_dict[param_key])
+
+                    if analysis_type == 'multi_pipe_failure_graph' and val < 2:
+                        return HttpResponseBadRequest(f'number of combinations must be > 1')
+
                     arg_dict[param_key] = val
                 except ValueError as e:
                     return HttpResponseBadRequest(f'{param_key} must be an integer')
@@ -998,9 +1006,8 @@ def download_analysis(request, analysis_id):
 def delete_network(request, network_id):
     network = get_object_or_404(WMNetwork, id=network_id)
 
-    #XXX
-    #if network.user.id != request.user.id:
-    #    return HttpResponseForbidden('Forbidden')
+    if network.user.id != request.user.id:
+        return HttpResponseForbidden('Forbidden')
 
     network.delete()
 

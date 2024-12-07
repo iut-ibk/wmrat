@@ -12,14 +12,6 @@
         "min_diameter": {
             "pretty": "Min. diameter",
             "type": "FLOAT"
-        },
-        "pressure_threshold": {
-            "pretty": "Pressure threshold",
-            "type": "FLOAT"
-        },
-        "pressure_threshold_abnormal": {
-            "pretty": "Pressure threshold (abnormal)",
-            "type": "FLOAT"
         }
     },
     "output": {

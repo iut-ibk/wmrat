@@ -97,7 +97,10 @@
             </ul>
         </div>
         <div class="ml-auto">
-            <a href="{% url 'logout' %}" class="btn btn-danger"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            <form class="d-flex" method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button class="btn btn-danger"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            </form>
         </div>
     </nav>
 </div>
