@@ -109,10 +109,8 @@
         });
     });
 
-    let attrib = 'Datenquelle: <a href="https://basemap.at">basemap.at</a>';
-
-    var url_grau = 'https://{s}.wien.gv.at/basemap/bmapgrau/normal/google3857/{z}/{y}/{x}.png';
-    var tilelayer_grau = L.tileLayer(url_grau, { maxZoom: 22, attribution: attrib, subdomains: ['maps1', 'maps2', 'maps3', 'maps4']});
+    var url_grau = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+    var tilelayer_grau = L.tileLayer(url_grau, { maxZoom: 22, attribution: attrib, subdomains: ['a', 'b', 'c']});
 
     var map = new L.Map('map', { zoom: 14, layers: [tilelayer_grau]});
 
