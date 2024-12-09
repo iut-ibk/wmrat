@@ -395,7 +395,7 @@ def graph_to_geojsons(epanet_nodes, epanet_edges, epanet_epsg_int):
 
         for c0, c1 in node_params['coords']:
             #NOTE: coords are reversed in coord sections [?]
-            trans_c1, trans_c0 = trans.transform(c1, c0)
+            trans_c1, trans_c0 = trans.transform(c0, c1)
             trans_coords.append([trans_c0, trans_c1])
 
         feature = {
@@ -432,7 +432,7 @@ def graph_to_geojsons(epanet_nodes, epanet_edges, epanet_epsg_int):
 
         for c0, c1 in edge_params['coords']:
             #NOTE: coords are reversed in coord sections [?]
-            trans_c1, trans_c0 = trans.transform(c1, c0)
+            trans_c1, trans_c0 = trans.transform(c0, c1)
             trans_coords.append([trans_c0, trans_c1])
 
         feature = {
