@@ -28,7 +28,7 @@
 <script>
 
 var url_grau = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-var tilelayer_grau = L.tileLayer(url_grau, { maxZoom: 20, attribution: attrib, subdomains: ['a', 'b', 'c', 'd']});
+var tilelayer_grau = L.tileLayer(url_grau, { maxZoom: 20, attribution: '...', subdomains: ['a', 'b', 'c', 'd']});
 
 var map = new L.Map('map', { zoom: 14, layers: [tilelayer_grau]});
 
