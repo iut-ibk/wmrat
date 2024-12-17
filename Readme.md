@@ -15,15 +15,19 @@ used and are installed into the virtual environment:
 - Django RQ
 - WNTR
 
+Pre installations needed:
 
-First check out this repository switch into it and open Windows Powershell or Ubuntu environment:
+- python 3.8 (link: https://www.python.org/downloads/release/python-380/)
+- Ubuntu (link: https://ubuntu.com/download) 
+
+Check out this repository switch into it:
 
     $ git clone git@github.com:iut-ibk/wmrat.git
     $ cd wmrat
 
 Make the environment:
 
-    $ python3.8 -m venv venv # required by WNTR
+    $ python -m venv venv # required by WNTR
 
 Activate it (observe how your shell prompt changes):
 
