@@ -15,7 +15,8 @@ used and are installed into the virtual environment:
 - Django RQ
 - WNTR
 
-First check out this repository and switch into it:
+
+First check out this repository switch into it and open Windows Powershell or Ubuntu environment:
 
     $ git clone git@github.com:iut-ibk/wmrat.git
     $ cd wmrat
