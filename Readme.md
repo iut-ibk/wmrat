@@ -18,7 +18,7 @@ used and are installed into the virtual environment:
 Pre-installations needed:
 
 - python 3.8 (link: https://www.python.org/downloads/release/python-380/)
-- Ubuntu (link: [https://ubuntu.com/download](https://apps.microsoft.com/detail/9pdxgncfsczv?amp%3Bgl=at&hl=de-DE&gl=AT)) 
+- Ubuntu (link: https://apps.microsoft.com/detail/9pdxgncfsczv?amp%3Bgl=at&hl=de-DE&gl=AT)
 
 Check out this repository switch into it:
 
