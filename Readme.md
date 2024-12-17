@@ -27,7 +27,7 @@ Check out this repository switch into it:
 
 Make the environment:
 
-    $ python -m venv venv # required by WNTR
+    $ python3.8 -m venv venv # required by WNTR
 
 Activate it (observe how your shell prompt changes):
 
