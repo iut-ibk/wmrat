@@ -15,7 +15,7 @@ used and are installed into the virtual environment:
 - Django RQ
 - WNTR
 
-Pre installations needed:
+Pre-installations needed:
 
 - python 3.8 (link: https://www.python.org/downloads/release/python-380/)
 - Ubuntu (link: https://ubuntu.com/download) 
