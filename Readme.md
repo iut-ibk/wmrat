@@ -7,15 +7,17 @@ urban water management resilience analysis. It is part of the project RESIST.
 # Development
 
 This section explains how to start the local development server in a virtual
-Python environemtn ("venv"). Make sure that you also have Redis installed and
-running (`systemctl start redis`). The following third party dependencies are
-used and are installed into the virtual environment:
+Python environment ("venv"). Make sure that you also have Redis installed and
+running (`systemctl start redis`). The following third-party dependencies are
+used and installed into the virtual environment:
 
 - Django
 - Django RQ
 - WNTR
 
-Pre-installations needed:
+Note: The software was developed for deployment within a Linux environment, where the outlined steps function optimally. Alternatively, a Windows WSL command may be employed to establish connectivity between a Windows system and a Linux host. However, this approach necessitates the installation of user-specific packages to ensure the software operates correctly.
+
+Pre-installations recommended:
 
 - python 3.8 (link: https://www.python.org/downloads/release/python-380/)
 - Ubuntu (link: https://apps.microsoft.com/detail/9pdxgncfsczv?amp%3Bgl=at&hl=de-DE&gl=AT)
